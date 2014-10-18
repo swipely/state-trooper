@@ -1,0 +1,25 @@
+{
+  "name": "state-trooper",
+  "version": "0.0.0",
+  "description": "Application State Manager",
+  "main": "index.js",
+  "scripts": {
+    "test": "./node_modules/mocha/bin/mocha --harmony test/**_test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/swipely/state-trooper.git"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/swipely/state-trooper/issues"
+  },
+  "homepage": "https://github.com/swipely/state-trooper",
+  "dependencies": {
+    "expect.js": "^0.3.1",
+    "js-csp": "^0.2.3",
+    "mocha": "^1.21.5",
+    "object-path": "0.6.0",
+    "underscore": "1.7.0"
+  }
+}
