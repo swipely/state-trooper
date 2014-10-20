@@ -11,7 +11,7 @@ go(function*() {
     document.querySelector('body')
   );
 
-  const ch = StateTrooper.patrol({
+  const cursorChan = StateTrooper.patrol({
     // describe the state for the page
     state: {
       serverReport: null,
@@ -27,10 +27,10 @@ go(function*() {
     }
   });
 
-  let cur;
-  while(cur = yield take(ch)) {
+  let cursor;
+  while(cursor = yield take(cursorChan)) {
     // update the component cursor prop everytime it changes
-    component.setProps({ cursor: cur });
+    component.setProps({ cursor: cursor });
   }
 });
 ```
