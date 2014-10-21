@@ -14,16 +14,21 @@ describe('StateTrooper', function () {
   describe('.patrol', function () {
     let cursorChan;
     let readChan;
+    let writeChan;
 
     beforeEach(function () {
       readChan = chan();
+      writeChan = chan();
 
       cursorChan = StateTrooper.patrol({
         state: {
           foo: 'bar'
         },
-        chans: {
-          'foo': { read: readChan }
+        io: {
+          'foo': {
+            reader: function () { return readChan; },
+            writer: function () { return writeChan; }
+          }
         }
       });
     });
@@ -35,13 +40,14 @@ describe('StateTrooper', function () {
       });
     });
 
-    describe('when taking from the states read chan', function () {
-      it('puts a new cursor on the cursor chan with updated state', function () {
+    describe('when taking from the state read chan', function () {
+      it('puts a new cursor on the cursor chan with updated state', function (done) {
         go(function* () {
           let cursor = yield take(cursorChan);
-          yield put(readChan, 'baz');
+          yield put(readChan, { foo: 'baz' });
           cursor = yield take(cursorChan);
           expect( cursor.value ).to.eql({ foo: 'baz' });
+          done();
         });
       });
     });
@@ -57,6 +63,20 @@ describe('StateTrooper', function () {
         });
       });
     });
+
+    describe('when the cursor syncs', function () {
+      it('puts a new cursor on the cursor chan with the writeChan result', function (done) {
+        go(function* () {
+          let cursor = yield take(cursorChan);
+          cursor.refine('foo').sync();
+          yield put(writeChan, 'baz');
+          cursor = yield take(cursorChan);
+          expect( cursor.value ).to.eql({ foo: 'baz' });
+          done();
+        });
+      });
+    });
+
   });
 
 });
