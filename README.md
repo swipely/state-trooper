@@ -19,11 +19,12 @@ go(function*() {
       activity: null
     },
 
-    // describe the channels for each piece of state
-    chans: {
-      'serverReport': { read: serverReportReadChan },
-      'bio': { read: bioReadChan, write: bioWriteChan },
-      'activity': { read: activityReadChan }
+    // describe the readers and writers for each piece of state
+    // readers and writers are functions that should return channels
+    io: {
+      'serverReport': { reader: serverReportReader },
+      'bio': { reader: bioReader, writer: bioWriter },
+      'activity': { reader: activityReader }
     }
   });
 
