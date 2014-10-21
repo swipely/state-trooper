@@ -21,12 +21,12 @@ describe('cursor', function () {
   describe('()', function () {
     let cur;
     let setCh;
-    let syncCh;
+    let persistCh;
 
     beforeEach(function () {
       setCh = chan();
-      syncCh = chan();
-      cur = cursor(state, '', setCh, syncCh);
+      persistCh = chan();
+      cur = cursor(state, '', setCh, persistCh);
     });
 
     it('returns a cursor bound to state', function () {
@@ -52,12 +52,12 @@ describe('cursor', function () {
       });
     });
 
-    describe('#sync', function () {
-      it('puts on the cursors sync chan', function (done) {
+    describe('#persist', function () {
+      it('puts on the cursors persist chan', function (done) {
         go(function* () {
-          cur.sync();
-          const op = yield take(syncCh);
-          expect(op).to.eql({ path: '' });
+          cur.persist();
+          const op = yield take(persistCh);
+          expect(op).to.eql('');
           done();
         });
       });
@@ -79,12 +79,12 @@ describe('cursor', function () {
         });
       });
 
-      describe('#sync', function () {
-        it('puts on the cursors sync chan', function (done) {
+      describe('#persist', function () {
+        it('puts on the cursors persist chan', function (done) {
           go(function* () {
-            cur.sync();
-            const op = yield take(syncCh);
-            expect(op).to.eql({ path: 'foo.bar' });
+            cur.persist();
+            const op = yield take(persistCh);
+            expect(op).to.eql('foo.bar');
             done();
           });
         });

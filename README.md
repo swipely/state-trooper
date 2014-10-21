@@ -19,12 +19,12 @@ go(function*() {
       activity: null
     },
 
-    // describe the readers and writers for each piece of state
-    // readers and writers are functions that should return channels
+    // describe the fetchers and persisters for each piece of state
+    // fetchers and persisters are functions that should return channels
     io: {
-      'serverReport': { reader: serverReportReader },
-      'bio': { reader: bioReader, writer: bioWriter },
-      'activity': { reader: activityReader }
+      'serverReport': { fetcher: serverReportFetcher },
+      'bio': { fetcher: bioFetcher, persister: bioPersister },
+      'activity': { fetcher: activityFetcher }
     }
   });
 
@@ -72,7 +72,7 @@ const Bio = React.createClass({
   },
 
   handleSaveClick: function () {
-    this.props.cursor.sync();
+    this.props.cursor.persist();
   }
 });
 ```

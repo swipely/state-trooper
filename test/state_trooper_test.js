@@ -13,12 +13,12 @@ describe('StateTrooper', function () {
 
   describe('.patrol', function () {
     let cursorChan;
-    let readChan;
-    let writeChan;
+    let fetchChan;
+    let persistChan;
 
     beforeEach(function () {
-      readChan = chan();
-      writeChan = chan();
+      fetchChan = chan();
+      persistChan = chan();
 
       cursorChan = StateTrooper.patrol({
         state: {
@@ -26,8 +26,8 @@ describe('StateTrooper', function () {
         },
         io: {
           'foo': {
-            reader: function () { return readChan; },
-            writer: function () { return writeChan; }
+            fetcher: function () { return fetchChan; },
+            persister: function () { return persistChan; }
           }
         }
       });
@@ -40,11 +40,11 @@ describe('StateTrooper', function () {
       });
     });
 
-    describe('when taking from the state read chan', function () {
+    describe('when taking from the state fetch chan', function () {
       it('puts a new cursor on the cursor chan with updated state', function (done) {
         go(function* () {
           let cursor = yield take(cursorChan);
-          yield put(readChan, { foo: 'baz' });
+          yield put(fetchChan, { foo: 'baz' });
           cursor = yield take(cursorChan);
           expect( cursor.value ).to.eql({ foo: 'baz' });
           done();
@@ -64,12 +64,12 @@ describe('StateTrooper', function () {
       });
     });
 
-    describe('when the cursor syncs', function () {
-      it('puts a new cursor on the cursor chan with the writeChan result', function (done) {
+    describe('when the cursor persists', function () {
+      it('puts a new cursor on the cursor chan with the persistChan result', function (done) {
         go(function* () {
           let cursor = yield take(cursorChan);
-          cursor.refine('foo').sync();
-          yield put(writeChan, 'baz');
+          cursor.refine('foo').persist();
+          yield put(persistChan, 'baz');
           cursor = yield take(cursorChan);
           expect( cursor.value ).to.eql({ foo: 'baz' });
           done();
