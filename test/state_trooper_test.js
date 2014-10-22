@@ -17,17 +17,14 @@ describe('StateTrooper', function () {
     let persistChan;
 
     beforeEach(function () {
-      fetchChan = chan();
-      persistChan = chan();
-
       cursorChan = StateTrooper.patrol({
         state: {
           foo: 'bar'
         },
-        io: {
+        dataStore: {
           'foo': {
-            fetcher: function () { return fetchChan; },
-            persister: function () { return persistChan; }
+            fetcher: function (ch) { fetchChan = ch; },
+            persister: function (ch) { persistChan = ch; }
           }
         }
       });
@@ -44,7 +41,7 @@ describe('StateTrooper', function () {
       it('puts a new cursor on the cursor chan with updated state', function (done) {
         go(function* () {
           let cursor = yield take(cursorChan);
-          yield put(fetchChan, { foo: 'baz' });
+          yield put(fetchChan, { path: 'foo', value: 'baz' });
           cursor = yield take(cursorChan);
           expect( cursor.value ).to.eql({ foo: 'baz' });
           done();
@@ -69,7 +66,9 @@ describe('StateTrooper', function () {
         go(function* () {
           let cursor = yield take(cursorChan);
           cursor.refine('foo').persist();
-          yield put(persistChan, 'baz');
+          // force the next tick so that persistChan is set
+          yield take(csp.timeout(1));
+          yield put(persistChan, { path: 'foo', value: 'baz' });
           cursor = yield take(cursorChan);
           expect( cursor.value ).to.eql({ foo: 'baz' });
           done();
