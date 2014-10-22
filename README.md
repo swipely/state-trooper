@@ -1,6 +1,8 @@
 state trooper
 =============
 
+![](https://travis-ci.org/swipely/state-trooper.svg?branch=master)
+
 # Example Usage
 
 Call `StateTrooper.patrol` in your route handler/main app entry point
