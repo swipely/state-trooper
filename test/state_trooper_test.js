@@ -13,21 +13,18 @@ describe('StateTrooper', function () {
 
   describe('.patrol', function () {
     let cursorChan;
-    let readChan;
-    let writeChan;
+    let fetchChan;
+    let persistChan;
 
     beforeEach(function () {
-      readChan = chan();
-      writeChan = chan();
-
       cursorChan = StateTrooper.patrol({
         state: {
           foo: 'bar'
         },
-        io: {
+        dataStore: {
           'foo': {
-            reader: function () { return readChan; },
-            writer: function () { return writeChan; }
+            fetcher: function (ch) { fetchChan = ch; },
+            persister: function (ch) { persistChan = ch; }
           }
         }
       });
@@ -40,11 +37,11 @@ describe('StateTrooper', function () {
       });
     });
 
-    describe('when taking from the state read chan', function () {
+    describe('when taking from the state fetch chan', function () {
       it('puts a new cursor on the cursor chan with updated state', function (done) {
         go(function* () {
           let cursor = yield take(cursorChan);
-          yield put(readChan, { foo: 'baz' });
+          yield put(fetchChan, { path: 'foo', value: 'baz' });
           cursor = yield take(cursorChan);
           expect( cursor.value ).to.eql({ foo: 'baz' });
           done();
@@ -64,12 +61,14 @@ describe('StateTrooper', function () {
       });
     });
 
-    describe('when the cursor syncs', function () {
-      it('puts a new cursor on the cursor chan with the writeChan result', function (done) {
+    describe('when the cursor persists', function () {
+      it('puts a new cursor on the cursor chan with the persistChan result', function (done) {
         go(function* () {
           let cursor = yield take(cursorChan);
-          cursor.refine('foo').sync();
-          yield put(writeChan, 'baz');
+          cursor.refine('foo').persist();
+          // force the next tick so that persistChan is set
+          yield take(csp.timeout(1));
+          yield put(persistChan, { path: 'foo', value: 'baz' });
           cursor = yield take(cursorChan);
           expect( cursor.value ).to.eql({ foo: 'baz' });
           done();

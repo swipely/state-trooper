@@ -21,12 +21,12 @@ go(function*() {
       activity: null
     },
 
-    // describe the readers and writers for each piece of state
-    // readers and writers are functions that should return channels
-    io: {
-      'serverReport': { reader: serverReportReader },
-      'bio': { reader: bioReader, writer: bioWriter },
-      'activity': { reader: activityReader }
+    // describe the fetchers and persisters for each piece of state
+    // fetchers and persisters are functions that should return channels
+    dataStore: {
+      'serverReport': { fetcher: serverReportFetcher },
+      'bio': { fetcher: bioFetcher, persister: bioPersister },
+      'activity': { fetcher: activityFetcher }
     }
   });
 
@@ -74,9 +74,16 @@ const Bio = React.createClass({
   },
 
   handleSaveClick: function () {
-    this.props.cursor.sync();
+    this.props.cursor.persist();
   }
 });
 ```
 
+fetchers and persisters will be called with the following arguments:
 
+- channel
+- path
+- state for path
+
+They are expected to put an object on the channel when they have finished their operation.
+The object must be like so: `{ path: path, value: newStateValue }`
