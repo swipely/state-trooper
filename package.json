@@ -16,6 +16,7 @@
   },
   "homepage": "https://github.com/swipely/state-trooper",
   "dependencies": {
+    "clone": "^0.1.18",
     "expect.js": "^0.3.1",
     "js-csp": "^0.2.3",
     "mocha": "^1.21.5",
