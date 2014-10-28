@@ -1,4 +1,4 @@
-const StateTrooper = require('./lib/state_trooper');
+var StateTrooper = require('./lib/state_trooper');
 
 if (window) {
   window.StateTrooper = StateTrooper;
