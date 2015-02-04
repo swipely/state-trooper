@@ -1,5 +1,5 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-const StateTrooper = require('./lib/state_trooper');
+var StateTrooper = require('./lib/state_trooper');
 
 if (window) {
   window.StateTrooper = StateTrooper;
@@ -7,7 +7,7 @@ if (window) {
 
 module.exports = StateTrooper;
 
-},{"./lib/state_trooper":3}],2:[function(require,module,exports){
+},{"./lib/state_trooper":4}],2:[function(require,module,exports){
 "use strict";
 
 var csp = require('js-csp');
@@ -50,7 +50,28 @@ var cursor = function (value, path, setCh, persistCh) {
 
 module.exports = cursor;
 
-},{"js-csp":6,"object-path":14,"underscore":15}],3:[function(require,module,exports){
+},{"js-csp":7,"object-path":15,"underscore":16}],3:[function(require,module,exports){
+"use strict";
+
+var findClosestPersister = function (dataStore, path) {
+  if (!dataStore) throw new Error('Called persist with no defined data store');
+
+  while (!(dataStore[path])) {
+    let parts = path.split('.');
+    parts.pop();
+    path = parts.join('.');
+
+    if (path.length === 0) {
+      throw new Error('Called persist with no defined persister.');
+    }
+  }
+
+  return dataStore[path].persister;
+};
+
+module.exports = findClosestPersister;
+
+},{}],4:[function(require,module,exports){
 "use strict";
 
 var ObjectPath = require('object-path');
@@ -70,6 +91,7 @@ var flatten = _.flatten;
 var partial = _.partial;
 
 var cursor = require('./cursor');
+var findClosestPersister = require('./find_closest_persister');
 
 var buildUpdatedState = function (oldState, pathToNewState, newState) {
   if (pathToNewState) {
@@ -138,7 +160,7 @@ var StateTrooper = {
     go(function* () {
       while (true) {
         var path = yield take(persistCh);
-        var persister = dataStore[path].persister;
+        var persister = findClosestPersister(dataStore, path);
 
         if (persister) {
           persister(setCh, path, getStateByPath(currentState, path));
@@ -152,7 +174,7 @@ var StateTrooper = {
 
 module.exports = StateTrooper;
 
-},{"./cursor":2,"clone":4,"js-csp":6,"object-path":14,"underscore":15}],4:[function(require,module,exports){
+},{"./cursor":2,"./find_closest_persister":3,"clone":5,"js-csp":7,"object-path":15,"underscore":16}],5:[function(require,module,exports){
 (function (Buffer){
 'use strict';
 
@@ -285,7 +307,7 @@ clone.clonePrototype = function(parent) {
 };
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":16}],5:[function(require,module,exports){
+},{"buffer":17}],6:[function(require,module,exports){
 "use strict";
 
 var buffers = require("./impl/buffers");
@@ -351,7 +373,7 @@ module.exports = {
   timeout: timers.timeout
 };
 
-},{"./impl/buffers":8,"./impl/channels":9,"./impl/process":11,"./impl/select":12,"./impl/timers":13}],6:[function(require,module,exports){
+},{"./impl/buffers":9,"./impl/channels":10,"./impl/process":12,"./impl/select":13,"./impl/timers":14}],7:[function(require,module,exports){
 "use strict";
 
 var csp = require("./csp.core");
@@ -361,7 +383,7 @@ csp.operations = operations;
 
 module.exports = csp;
 
-},{"./csp.core":5,"./csp.operations":7}],7:[function(require,module,exports){
+},{"./csp.core":6,"./csp.operations":8}],8:[function(require,module,exports){
 "use strict";
 
 var Box = require("./impl/channels").Box;
@@ -990,7 +1012,7 @@ module.exports = {
 //   .into([])
 //   .unwrap();
 
-},{"./csp.core":5,"./impl/channels":9}],8:[function(require,module,exports){
+},{"./csp.core":6,"./impl/channels":10}],9:[function(require,module,exports){
 "use strict";
 
 // TODO: Consider EmptyError & FullError to avoid redundant bound
@@ -1177,7 +1199,7 @@ exports.sliding = function sliding_buffer(n) {
 
 exports.EMPTY = EMPTY;
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 "use strict";
 
 var buffers = require("./buffers");
@@ -1372,7 +1394,7 @@ exports.Box = Box;
 
 exports.CLOSED = CLOSED;
 
-},{"./buffers":8,"./dispatch":10}],10:[function(require,module,exports){
+},{"./buffers":9,"./dispatch":11}],11:[function(require,module,exports){
 "use strict";
 
 // TODO: Use process.nextTick if it's available since it's more
@@ -1456,7 +1478,7 @@ exports.queue_delay = function(f, delay) {
   setTimeout(f, delay);
 };
 
-},{"./buffers":8}],11:[function(require,module,exports){
+},{"./buffers":9}],12:[function(require,module,exports){
 "use strict";
 
 var dispatch = require("./dispatch");
@@ -1608,7 +1630,7 @@ exports.alts = alts;
 
 exports.Process = Process;
 
-},{"./dispatch":10,"./select":12}],12:[function(require,module,exports){
+},{"./dispatch":11,"./select":13}],13:[function(require,module,exports){
 "use strict";
 
 var Box = require("./channels").Box;
@@ -1712,7 +1734,7 @@ exports.do_alts = function(operations, callback, options) {
 
 exports.DEFAULT = DEFAULT;
 
-},{"./channels":9}],13:[function(require,module,exports){
+},{"./channels":10}],14:[function(require,module,exports){
 "use strict";
 
 var dispatch = require("./dispatch");
@@ -1726,7 +1748,7 @@ exports.timeout = function timeout_channel(msecs) {
   return chan;
 };
 
-},{"./channels":9,"./dispatch":10}],14:[function(require,module,exports){
+},{"./channels":10,"./dispatch":11}],15:[function(require,module,exports){
 (function (root, factory){
   'use strict';
 
@@ -1968,7 +1990,7 @@ exports.timeout = function timeout_channel(msecs) {
 
   return objectPath;
 });
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 //     Underscore.js 1.7.0
 //     http://underscorejs.org
 //     (c) 2009-2014 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -3385,7 +3407,7 @@ exports.timeout = function timeout_channel(msecs) {
   }
 }.call(this));
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 /*!
  * The buffer module from node.js, for the browser.
  *
@@ -4437,7 +4459,7 @@ function decodeUtf8Char (str) {
   }
 }
 
-},{"base64-js":17,"ieee754":18,"is-array":19}],17:[function(require,module,exports){
+},{"base64-js":18,"ieee754":19,"is-array":20}],18:[function(require,module,exports){
 var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 ;(function (exports) {
@@ -4559,7 +4581,7 @@ var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 	exports.fromByteArray = uint8ToBase64
 }(typeof exports === 'undefined' ? (this.base64js = {}) : exports))
 
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 exports.read = function(buffer, offset, isLE, mLen, nBytes) {
   var e, m,
       eLen = nBytes * 8 - mLen - 1,
@@ -4645,7 +4667,7 @@ exports.write = function(buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128;
 };
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 
 /**
  * isArray
