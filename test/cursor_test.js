@@ -21,12 +21,14 @@ describe('cursor', function () {
   describe('()', function () {
     let cur;
     let setCh;
+    let removeCh;
     let persistCh;
 
     beforeEach(function () {
       setCh = chan();
+      removeCh = chan();
       persistCh = chan();
-      cur = cursor(state, '', setCh, persistCh);
+      cur = cursor(state, '', setCh, removeCh, persistCh);
     });
 
     it('returns a cursor bound to state', function () {
@@ -47,6 +49,17 @@ describe('cursor', function () {
           cur.set('newval');
           const change = yield take(setCh);
           expect(change).to.eql({ path: '', value: 'newval'});
+          done();
+        });
+      });
+    });
+
+    describe('#remove', function () {
+      it('puts a change on the cursors remove chan', function (done) {
+        go(function* () {
+          cur.refine('foo').refine('bar').remove();
+          const change = yield take(removeCh);
+          expect(change).to.eql({ path: 'foo.bar', value: { baz: 42 }});
           done();
         });
       });
