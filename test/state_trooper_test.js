@@ -75,7 +75,6 @@ describe('StateTrooper', function () {
         });
       });
     });
-
   });
 
 });
