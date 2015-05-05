@@ -23,12 +23,14 @@ describe('cursor', function () {
     let setCh;
     let removeCh;
     let persistCh;
+    let fetchCh;
 
     beforeEach(function () {
       setCh = chan();
       removeCh = chan();
       persistCh = chan();
-      cur = cursor(state, '', setCh, removeCh, persistCh);
+      fetchCh = chan();
+      cur = cursor(state, '', setCh, removeCh, fetchCh, persistCh);
     });
 
     it('returns a cursor bound to state', function () {
@@ -76,6 +78,17 @@ describe('cursor', function () {
       });
     });
 
+    describe('#fetch', function () {
+      it('puts on the cursors fetch chan', function (done) {
+        go(function* () {
+          cur.fetch();
+          const op = yield take(fetchCh);
+          expect(op).to.eql('');
+          done();
+        });
+      });
+    });
+
     describe('with a refined cursor', function () {
       beforeEach(function () {
         cur = cur.refine('foo.bar');
@@ -97,6 +110,17 @@ describe('cursor', function () {
           go(function* () {
             cur.persist();
             const op = yield take(persistCh);
+            expect(op).to.eql('foo.bar');
+            done();
+          });
+        });
+      });
+
+      describe('#fetch', function () {
+        it('puts on the cursors fetch chan', function (done) {
+          go(function* () {
+            cur.fetch();
+            const op = yield take(fetchCh);
             expect(op).to.eql('foo.bar');
             done();
           });
