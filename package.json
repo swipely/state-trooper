@@ -1,9 +1,10 @@
 {
   "name": "state-trooper",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Application State Manager",
   "main": "index.js",
   "scripts": {
+    "build": "...",
     "test": "./node_modules/mocha/bin/mocha --harmony test/**_test.js"
   },
   "repository": {

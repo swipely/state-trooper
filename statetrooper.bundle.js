@@ -1,5 +1,11 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-var StateTrooper = require('./lib/state_trooper');
+var getStateByPath = require('./lib/get_state_by_path');
+var patrol = require('./lib/patrol');
+
+var StateTrooper = {
+  getStateByPath: getStateByPath,
+  patrol: patrol
+};
 
 if (window) {
   window.StateTrooper = StateTrooper;
@@ -7,7 +13,26 @@ if (window) {
 
 module.exports = StateTrooper;
 
-},{"./lib/state_trooper":4}],2:[function(require,module,exports){
+},{"./lib/get_state_by_path":5,"./lib/patrol":6}],2:[function(require,module,exports){
+"use strict";
+
+var ObjectPath = require('object-path');
+var clone = require('clone');
+
+var buildUpdatedState = function (oldState, pathToNewState, newState) {
+  if (pathToNewState) {
+    var changedState = clone(oldState);
+    ObjectPath.set(changedState, pathToNewState, newState);
+    return changedState;
+  }
+  else {
+    return clone(newState);
+  }
+};
+
+module.exports = buildUpdatedState;
+
+},{"clone":8,"object-path":18}],3:[function(require,module,exports){
 "use strict";
 
 var csp = require('js-csp');
@@ -68,7 +93,7 @@ var cursor = function (value, path, setCh, removeCh, fetchCh, persistCh) {
 
 module.exports = cursor;
 
-},{"js-csp":7,"object-path":15,"underscore":16}],3:[function(require,module,exports){
+},{"js-csp":10,"object-path":18,"underscore":19}],4:[function(require,module,exports){
 "use strict";
 
 var findClosestTransmitter = function (type, dataStore, path) {
@@ -89,61 +114,123 @@ var findClosestTransmitter = function (type, dataStore, path) {
 
 module.exports = findClosestTransmitter;
 
-},{}],4:[function(require,module,exports){
-"use strict";
-
+},{}],5:[function(require,module,exports){
 var ObjectPath = require('object-path');
+
+var getStateByPath = function (state, path) {
+  return ObjectPath.get(state, path);
+};
+
+module.exports = getStateByPath;
+
+},{"object-path":18}],6:[function(require,module,exports){
+var _ = require('underscore');
+var csp = require("js-csp");
 var clone = require('clone');
 
-var csp = require("js-csp");
+var buildUpdatedState = require('./build_updated_state');
+var removeStateAtPath = require('./remove_state_at_path');
+var getStateByPath = require('./get_state_by_path');
+var cursor = require('./cursor');
+var findClosestTransmitter = require('./find_closest_transmitter');
+
 var go = csp.go;
 var chan = csp.chan;
 var take = csp.take;
 var put = csp.put;
 
-var _ = require('underscore');
 var map = _.map;
 var each = _.each;
 var filter = _.filter;
 var flatten = _.flatten;
 var partial = _.partial;
 
-var cursor = require('./cursor');
-var findClosestTransmitter = require('./find_closest_transmitter');
 var findClosestPersister = partial(findClosestTransmitter, 'persister');
 var findClosestFetcher = partial(findClosestTransmitter, 'fetcher');
 
-var buildUpdatedState = function (oldState, pathToNewState, newState) {
-  if (pathToNewState) {
-    var changedState = clone(oldState);
-    ObjectPath.set(changedState, pathToNewState, newState);
-    return changedState;
-  }
-  else {
-    return clone(newState);
-  }
-};
+var patrol = function (stateDescriptor) {
+  var currentState = clone(stateDescriptor.state);
 
-var putCursorOnChan = function (ch, cur) {
-  go(function* () { yield put(ch, cur); });
-};
+  var dataStore = stateDescriptor.dataStore;
 
-var getPathByChan = function (chans, chan) {
-  return flatten(
-    filter(
-      map(chans, function (v, k) { return [v, k]; }),
-      function (descriptor) { return descriptor[0].read === chan; }
-    )
-  )[1];
-};
+  var mainCursorCh = chan();
 
-var getPersisterByPath = function (dataStore, path) {
-  return dataStore[path].persister;
-};
+  var setCh = chan();
+  var removeCh = chan();
+  var persistCh = chan();
+  var fetchCh = chan();
+  var createCursor = partial(cursor, _, '', setCh, removeCh, fetchCh, persistCh);
 
-var getStateByPath = function (state, path) {
-  return ObjectPath.get(state, path);
-};
+  var changes = [];
+
+  // put initial blank cursor
+  putCursorOnChan(mainCursorCh, createCursor(currentState));
+
+  // fetch initial data
+  each(dataStore, function (conf, path) {
+    if (conf.fetcher && conf.initialFetch !== false) {
+      conf.fetcher(setCh, path, getStateByPath(currentState, path));
+    }
+  });
+
+  // react to any new data on the set channel
+  go(function* () {
+    while (true) {
+      var change = yield take(setCh);
+
+      changes.push({action: 'set', path: change.path, value: change.value});
+      currentState = buildUpdatedState(currentState, change.path, change.value);
+      putCursorOnChan(mainCursorCh, createCursor(currentState));
+    }
+  });
+
+  // react to any new data on the remove channel
+  go(function* () {
+    while (true) {
+      var change = yield take(removeCh);
+
+      changes.push({action: 'remove', path: change.path, value: change.value });
+      currentState = removeStateAtPath(currentState, change.path);
+      putCursorOnChan(mainCursorCh, createCursor(currentState));
+    }
+  });
+
+  // react to any persist requests
+  go(function* () {
+    while (true) {
+      var path = yield take(persistCh);
+      var persister = findClosestPersister(dataStore, path);
+
+      if (persister) {
+        persister(setCh, path, getStateByPath(currentState, path), changes.pop(), currentState);
+      }
+
+      changes = [];
+    }
+  });
+
+  // react to any fetch requests
+  go(function* () {
+    while (true) {
+      var path = yield take(fetchCh);
+      var fetcher = findClosestFetcher(dataStore, path);
+
+      if (fetcher) {
+        fetcher(setCh, path, getStateByPath(currentState, path));
+      }
+    }
+  });
+
+  return mainCursorCh;
+}
+
+module.exports = patrol;
+
+},{"./build_updated_state":2,"./cursor":3,"./find_closest_transmitter":4,"./get_state_by_path":5,"./remove_state_at_path":7,"clone":8,"js-csp":10,"underscore":19}],7:[function(require,module,exports){
+"use strict";
+
+var ObjectPath = require('object-path');
+var clone = require('clone');
 
 var removeStateAtPath = function (oldState, path) {
   let clonedState = clone(oldState);
@@ -151,88 +238,9 @@ var removeStateAtPath = function (oldState, path) {
   return clonedState;
 };
 
-var StateTrooper = {
-  getStateByPath: getStateByPath,
-  patrol: function (stateDescriptor) {
-    var currentState = clone(stateDescriptor.state);
+module.exports = removeStateAtPath;
 
-    var dataStore = stateDescriptor.dataStore;
-
-    var mainCursorCh = chan();
-
-    var setCh = chan();
-    var removeCh = chan();
-    var persistCh = chan();
-    var fetchCh = chan();
-    var createCursor = partial(cursor, _, '', setCh, removeCh, fetchCh, persistCh);
-
-    var changes = [];
-
-    // put initial blank cursor
-    putCursorOnChan(mainCursorCh, createCursor(currentState));
-
-    // fetch initial data
-    each(dataStore, function (conf, path) {
-      if (conf.fetcher && conf.initialFetch !== false) {
-        conf.fetcher(setCh, path, getStateByPath(currentState, path));
-      }
-    });
-
-    // react to any new data on the set channel
-    go(function* () {
-      while (true) {
-        var change = yield take(setCh);
-
-        changes.push({action: 'set', path: change.path, value: change.value});
-        currentState = buildUpdatedState(currentState, change.path, change.value);
-        putCursorOnChan(mainCursorCh, createCursor(currentState));
-      }
-    });
-
-    // react to any new data on the remove channel
-    go(function* () {
-      while (true) {
-        var change = yield take(removeCh);
-
-        changes.push({action: 'remove', path: change.path, value: change.value });
-        currentState = removeStateAtPath(currentState, change.path);
-        putCursorOnChan(mainCursorCh, createCursor(currentState));
-      }
-    });
-
-    // react to any persist requests
-    go(function* () {
-      while (true) {
-        var path = yield take(persistCh);
-        var persister = findClosestPersister(dataStore, path);
-
-        if (persister) {
-          persister(setCh, path, getStateByPath(currentState, path), changes.pop(), currentState);
-        }
-
-        changes = [];
-      }
-    });
-
-    // react to any fetch requests
-    go(function* () {
-      while (true) {
-        var path = yield take(fetchCh);
-        var fetcher = findClosestFetcher(dataStore, path);
-
-        if (fetcher) {
-          fetcher(setCh, path, getStateByPath(currentState, path));
-        }
-      }
-    });
-
-    return mainCursorCh;
-  }
-};
-
-module.exports = StateTrooper;
-
-},{"./cursor":2,"./find_closest_transmitter":3,"clone":5,"js-csp":7,"object-path":15,"underscore":16}],5:[function(require,module,exports){
+},{"clone":8,"object-path":18}],8:[function(require,module,exports){
 (function (Buffer){
 'use strict';
 
@@ -380,7 +388,7 @@ clone.clonePrototype = function(parent) {
 };
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":17}],6:[function(require,module,exports){
+},{"buffer":20}],9:[function(require,module,exports){
 "use strict";
 
 var buffers = require("./impl/buffers");
@@ -446,7 +454,7 @@ module.exports = {
   timeout: timers.timeout
 };
 
-},{"./impl/buffers":9,"./impl/channels":10,"./impl/process":12,"./impl/select":13,"./impl/timers":14}],7:[function(require,module,exports){
+},{"./impl/buffers":12,"./impl/channels":13,"./impl/process":15,"./impl/select":16,"./impl/timers":17}],10:[function(require,module,exports){
 "use strict";
 
 var csp = require("./csp.core");
@@ -456,7 +464,7 @@ csp.operations = operations;
 
 module.exports = csp;
 
-},{"./csp.core":6,"./csp.operations":8}],8:[function(require,module,exports){
+},{"./csp.core":9,"./csp.operations":11}],11:[function(require,module,exports){
 "use strict";
 
 var Box = require("./impl/channels").Box;
@@ -1085,7 +1093,7 @@ module.exports = {
 //   .into([])
 //   .unwrap();
 
-},{"./csp.core":6,"./impl/channels":10}],9:[function(require,module,exports){
+},{"./csp.core":9,"./impl/channels":13}],12:[function(require,module,exports){
 "use strict";
 
 // TODO: Consider EmptyError & FullError to avoid redundant bound
@@ -1272,7 +1280,7 @@ exports.sliding = function sliding_buffer(n) {
 
 exports.EMPTY = EMPTY;
 
-},{}],10:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 "use strict";
 
 var buffers = require("./buffers");
@@ -1467,7 +1475,7 @@ exports.Box = Box;
 
 exports.CLOSED = CLOSED;
 
-},{"./buffers":9,"./dispatch":11}],11:[function(require,module,exports){
+},{"./buffers":12,"./dispatch":14}],14:[function(require,module,exports){
 "use strict";
 
 // TODO: Use process.nextTick if it's available since it's more
@@ -1551,7 +1559,7 @@ exports.queue_delay = function(f, delay) {
   setTimeout(f, delay);
 };
 
-},{"./buffers":9}],12:[function(require,module,exports){
+},{"./buffers":12}],15:[function(require,module,exports){
 "use strict";
 
 var dispatch = require("./dispatch");
@@ -1703,7 +1711,7 @@ exports.alts = alts;
 
 exports.Process = Process;
 
-},{"./dispatch":11,"./select":13}],13:[function(require,module,exports){
+},{"./dispatch":14,"./select":16}],16:[function(require,module,exports){
 "use strict";
 
 var Box = require("./channels").Box;
@@ -1807,7 +1815,7 @@ exports.do_alts = function(operations, callback, options) {
 
 exports.DEFAULT = DEFAULT;
 
-},{"./channels":10}],14:[function(require,module,exports){
+},{"./channels":13}],17:[function(require,module,exports){
 "use strict";
 
 var dispatch = require("./dispatch");
@@ -1821,7 +1829,7 @@ exports.timeout = function timeout_channel(msecs) {
   return chan;
 };
 
-},{"./channels":10,"./dispatch":11}],15:[function(require,module,exports){
+},{"./channels":13,"./dispatch":14}],18:[function(require,module,exports){
 (function (root, factory){
   'use strict';
 
@@ -2063,7 +2071,7 @@ exports.timeout = function timeout_channel(msecs) {
 
   return objectPath;
 });
-},{}],16:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 //     Underscore.js 1.7.0
 //     http://underscorejs.org
 //     (c) 2009-2014 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -3480,7 +3488,7 @@ exports.timeout = function timeout_channel(msecs) {
   }
 }.call(this));
 
-},{}],17:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 /*!
  * The buffer module from node.js, for the browser.
  *
@@ -4896,7 +4904,7 @@ function decodeUtf8Char (str) {
   }
 }
 
-},{"base64-js":18,"ieee754":19,"is-array":20}],18:[function(require,module,exports){
+},{"base64-js":21,"ieee754":22,"is-array":23}],21:[function(require,module,exports){
 var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 ;(function (exports) {
@@ -5022,7 +5030,7 @@ var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 	exports.fromByteArray = uint8ToBase64
 }(typeof exports === 'undefined' ? (this.base64js = {}) : exports))
 
-},{}],19:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m,
       eLen = nBytes * 8 - mLen - 1,
@@ -5108,7 +5116,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],20:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 
 /**
  * isArray

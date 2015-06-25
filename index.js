@@ -1,4 +1,10 @@
-var StateTrooper = require('./lib/state_trooper');
+var getStateByPath = require('./lib/get_state_by_path');
+var patrol = require('./lib/patrol');
+
+var StateTrooper = {
+  getStateByPath: getStateByPath,
+  patrol: patrol
+};
 
 if (window) {
   window.StateTrooper = StateTrooper;
