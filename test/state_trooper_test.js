@@ -1,7 +1,7 @@
 "use strict";
 
 const expect = require('expect.js');
-const csp = require('js-csp');
+const csp = require('../vendor/js-csp');
 const StateTrooper = require('../lib/state_trooper');
 
 const go = csp.go;

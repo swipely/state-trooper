@@ -4,8 +4,8 @@
   "description": "Application State Manager",
   "main": "index.js",
   "scripts": {
-    "build": "...",
-    "test": "./node_modules/mocha/bin/mocha --harmony test/**_test.js"
+    "package": "browserify index.js -t babelify --outfile statetrooper.bundle.js",
+    "test": "./node_modules/mocha/bin/mocha --compilers js:babel/register test/**_test.js"
   },
   "repository": {
     "type": "git",
@@ -19,9 +19,13 @@
   "dependencies": {
     "clone": "^0.1.18",
     "expect.js": "^0.3.1",
-    "js-csp": "^0.2.3",
     "mocha": "^1.21.5",
     "object-path": "0.6.0",
     "underscore": "1.7.0"
+  },
+  "devDependencies": {
+    "babel": "^5.6.7",
+    "babelify": "^6.1.2",
+    "browserify": "^10.2.4"
   }
 }

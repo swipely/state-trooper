@@ -1,13 +1,9 @@
-var getStateByPath = require('./lib/get_state_by_path');
-var patrol = require('./lib/patrol');
+require("babel/register");
 
-var StateTrooper = {
-  getStateByPath: getStateByPath,
-  patrol: patrol
-};
+import StateTrooper from './lib/state_trooper';
 
 if (window) {
   window.StateTrooper = StateTrooper;
 }
 
-module.exports = StateTrooper;
+export default StateTrooper;

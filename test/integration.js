@@ -1,10 +1,6 @@
-const csp = require("js-csp");
-const go = csp.go;
-const chan = csp.chan;
-const take = csp.take;
-const put = csp.put;
-
-const StateTrooper = require('../index');
+// run with babel-node
+import { go, chan, take, put } from "../vendor/js-csp";
+import StateTrooper from '../lib/state_trooper';
 
 const serverReportReadChan = chan();
 const bioReadChan = chan();
@@ -28,12 +24,12 @@ go(function*() {
   });
 
   // simulate ajax
-  setTimeout(function () {
+  setTimeout(() => {
     go(function* () {
       yield put(serverReportReadChan, 'omg awesome');
     });
   }, 1000);
-  setTimeout(function () {
+  setTimeout(() => {
     go(function* () {
       yield put(activityReadChan, 'yay its active');
     });
