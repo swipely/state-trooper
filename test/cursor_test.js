@@ -1,15 +1,8 @@
-"use strict";
+import expect from 'expect.js';
+import { go, chan, put, take } from '../vendor/js-csp';
+import cursor from '../lib/cursor';
 
-const expect = require('expect.js');
-const csp = require('js-csp');
-const cursor = require('../lib/cursor');
-
-const go = csp.go;
-const chan = csp.chan;
-const put = csp.put;
-const take = csp.take;
-
-describe('cursor', function () {
+describe('cursor', () => {
   const state = {
     foo: {
       bar: {
@@ -18,14 +11,14 @@ describe('cursor', function () {
     }
   };
 
-  describe('()', function () {
+  describe('()', () => {
     let cur;
     let setCh;
     let removeCh;
     let persistCh;
     let fetchCh;
 
-    beforeEach(function () {
+    beforeEach(() => {
       setCh = chan();
       removeCh = chan();
       persistCh = chan();
@@ -33,20 +26,20 @@ describe('cursor', function () {
       cur = cursor(state, '', setCh, removeCh, fetchCh, persistCh);
     });
 
-    it('returns a cursor bound to state', function () {
+    it('returns a cursor bound to state', () => {
       expect(cur.value).to.eql({ foo: { bar: { baz: 42 }}});
     });
 
-    describe('#refine', function () {
-      it('returns a new cursor bound to the refined state', function () {
+    describe('#refine', () => {
+      it('returns a new cursor bound to the refined state', () => {
         const refined = cur.refine('foo.bar');
         expect(refined.value).to.eql({baz: 42});
         expect(refined.path).to.be('foo.bar');
       });
     });
 
-    describe('#set', function () {
-      it('puts a change on the cursors set chan', function (done) {
+    describe('#set', () => {
+      it('puts a change on the cursors set chan', (done) => {
         go(function* () {
           cur.set('newval');
           const change = yield take(setCh);
@@ -56,8 +49,8 @@ describe('cursor', function () {
       });
     });
 
-    describe('#remove', function () {
-      it('puts a change on the cursors remove chan', function (done) {
+    describe('#remove', () => {
+      it('puts a change on the cursors remove chan', (done) => {
         go(function* () {
           cur.refine('foo').refine('bar').remove();
           const change = yield take(removeCh);
@@ -67,8 +60,8 @@ describe('cursor', function () {
       });
     });
 
-    describe('#persist', function () {
-      it('puts on the cursors persist chan', function (done) {
+    describe('#persist', () => {
+      it('puts on the cursors persist chan', (done) => {
         go(function* () {
           cur.persist();
           const op = yield take(persistCh);
@@ -78,8 +71,8 @@ describe('cursor', function () {
       });
     });
 
-    describe('#fetch', function () {
-      it('puts on the cursors fetch chan', function (done) {
+    describe('#fetch', () => {
+      it('puts on the cursors fetch chan', (done) => {
         go(function* () {
           cur.fetch();
           const op = yield take(fetchCh);
@@ -89,13 +82,13 @@ describe('cursor', function () {
       });
     });
 
-    describe('with a refined cursor', function () {
-      beforeEach(function () {
+    describe('with a refined cursor', () => {
+      beforeEach(() => {
         cur = cur.refine('foo.bar');
       });
 
-      describe('#set', function () {
-        it('puts a change on the cursors set chan', function (done) {
+      describe('#set', () => {
+        it('puts a change on the cursors set chan', (done) => {
           go(function* () {
             cur.set('newval');
             const change = yield take(setCh);
@@ -105,8 +98,8 @@ describe('cursor', function () {
         });
       });
 
-      describe('#persist', function () {
-        it('puts on the cursors persist chan', function (done) {
+      describe('#persist', () => {
+        it('puts on the cursors persist chan', (done) => {
           go(function* () {
             cur.persist();
             const op = yield take(persistCh);
@@ -116,8 +109,8 @@ describe('cursor', function () {
         });
       });
 
-      describe('#fetch', function () {
-        it('puts on the cursors fetch chan', function (done) {
+      describe('#fetch', () => {
+        it('puts on the cursors fetch chan', (done) => {
           go(function* () {
             cur.fetch();
             const op = yield take(fetchCh);

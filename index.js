@@ -1,7 +1,9 @@
-var StateTrooper = require('./lib/state_trooper');
+require("babel/register");
+
+import StateTrooper from './lib/state_trooper';
 
 if (window) {
   window.StateTrooper = StateTrooper;
 }
 
-module.exports = StateTrooper;
+export default StateTrooper;
