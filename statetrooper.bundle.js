@@ -176,7 +176,8 @@ Object.defineProperty(exports, '__esModule', {
   value: true
 });
 var getStateByPath = function getStateByPath(state, path) {
-  return state.get(path.split('.'));
+  var imVal = typeof value.toJS === 'function' ? value : Immutable.fromJS(value);
+  return imVal.getIn(path.split('.'));
 };
 
 exports['default'] = getStateByPath;
