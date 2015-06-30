@@ -112,7 +112,7 @@ var cMap = function cMap(value, mapper) {
 };
 
 var cursor = function cursor(value, path, setCh, removeCh, fetchCh, persistCh) {
-  var imVal = typeof value.toJS === 'function' ? value : _immutable2['default'].fromJS(value);
+  var imVal = _immutable2['default'].fromJS(value);
 
   var o = {
     path: path,
@@ -175,15 +175,22 @@ module.exports = exports["default"];
 Object.defineProperty(exports, '__esModule', {
   value: true
 });
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+var _immutable = require('immutable');
+
+var _immutable2 = _interopRequireDefault(_immutable);
+
 var getStateByPath = function getStateByPath(state, path) {
-  var imVal = typeof value.toJS === 'function' ? value : Immutable.fromJS(value);
+  var imVal = _immutable2['default'].fromJS(state);
   return imVal.getIn(path.split('.'));
 };
 
 exports['default'] = getStateByPath;
 module.exports = exports['default'];
 
-},{}],6:[function(require,module,exports){
+},{"immutable":106}],6:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
