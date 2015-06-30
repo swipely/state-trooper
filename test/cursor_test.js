@@ -27,7 +27,7 @@ describe('cursor', () => {
     });
 
     it('returns a cursor bound to state', () => {
-      expect(cur.value).to.eql({ foo: { bar: { baz: 42 }}});
+      expect(cur.deref()).to.eql({ foo: { bar: { baz: 42 }}});
     });
 
     describe('#hasSameValue', () => {
@@ -47,7 +47,7 @@ describe('cursor', () => {
     describe('#refine', () => {
       it('returns a new cursor bound to the refined state', () => {
         const refined = cur.refine('foo.bar');
-        expect(refined.value).to.eql({baz: 42});
+        expect(refined.deref()).to.eql({baz: 42});
         expect(refined.path).to.be('foo.bar');
       });
     });
@@ -55,7 +55,7 @@ describe('cursor', () => {
     describe('#replace', () => {
       it('puts a complete change on the cursors set chan', (done) => {
         go(function* () {
-          cur.set('newval');
+          cur.replace('newval');
           const change = yield take(setCh);
           expect(change).to.eql({ path: '', value: 'newval'});
           done();
@@ -68,7 +68,8 @@ describe('cursor', () => {
         go(function* () {
           cur.refine('foo').refine('bar').remove();
           const change = yield take(removeCh);
-          expect(change).to.eql({ path: 'foo.bar', value: { baz: 42 }});
+          expect( change.path ).to.eql('foo.bar');
+          expect( change.value.toJS() ).to.eql({baz: 42});
           done();
         });
       });
@@ -88,7 +89,8 @@ describe('cursor', () => {
           go(function* () {
             cur.set({foo: 'bar'});
             const change = yield take(setCh);
-            expect(change).to.eql({ path: '', value: {foo: 'bar', baz: 'beep'}});
+            expect( change.path ).to.eql('');
+            expect( change.value.toJS() ).to.eql({foo: 'bar', baz: 'beep'});
             done();
           });
         });
@@ -102,14 +104,6 @@ describe('cursor', () => {
 
       it('exposes #map', () => {
         expect( cur.map ).to.be.a('function');
-      });
-
-      it('exposes #find', () => {
-        expect( cur.find ).to.be.a('function');
-      });
-
-      it('exposes #filter', () => {
-        expect( cur.filter ).to.be.a('function');
       });
     });
 

@@ -33,7 +33,7 @@ describe('StateTrooper', function () {
     it('puts a cursor on the cursor chan', function () {
       go(function* () {
         let cursor = yield take(cursorChan);
-        expect( cursor.value ).to.eql({ foo: 'bar' });
+        expect( cursor.deref() ).to.eql({ foo: 'bar' });
       });
     });
 
@@ -43,7 +43,7 @@ describe('StateTrooper', function () {
           let cursor = yield take(cursorChan);
           yield put(fetchChan, { path: 'foo', value: 'baz' });
           cursor = yield take(cursorChan);
-          expect( cursor.value ).to.eql({ foo: 'baz' });
+          expect( cursor.deref() ).to.eql({ foo: 'baz' });
           done();
         });
       });
@@ -55,7 +55,7 @@ describe('StateTrooper', function () {
           let cursor = yield take(cursorChan);
           cursor.set({ foo: 'baz' });
           cursor = yield take(cursorChan);
-          expect( cursor.value ).to.eql({ foo: 'baz' });
+          expect( cursor.deref() ).to.eql({ foo: 'baz' });
           done();
         });
       });
@@ -70,7 +70,7 @@ describe('StateTrooper', function () {
           yield take(csp.timeout(1));
           yield put(persistChan, { path: 'foo', value: 'baz' });
           cursor = yield take(cursorChan);
-          expect( cursor.value ).to.eql({ foo: 'baz' });
+          expect( cursor.deref() ).to.eql({ foo: 'baz' });
           done();
         });
       });

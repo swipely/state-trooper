@@ -37,17 +37,17 @@ go(function*() {
 
   let cur, c, x;
   while(cur = yield take(ch)) {
-    console.log(cur.value);
+    console.log(cur.deref());
 
     // simulate component modifying state
     c = cur.refine('bio');
 
-    if (c.value === null) {
-      c.set({ foo: 'bar' });
+    if (c.deref() === null) {
+      c.replace({ foo: 'bar' });
     }
-    else if (c.value.foo === 'bar') {
+    else if (c.deref().foo === 'bar') {
       x = c.refine('foo');
-      x.set('baz');
+      x.replace('baz');
     }
   }
 });
