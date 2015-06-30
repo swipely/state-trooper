@@ -69,7 +69,7 @@ var isEqual = function isEqual(valueA, valueB) {
 };
 
 var deref = function deref(value) {
-  return value ? value.toJS() : value;
+  return value && typeof value.toJS === 'function' ? value.toJS() : value;
 };
 
 var putOnChanIfChanged = function putOnChanIfChanged(ch, path, oldValue, newValue) {
@@ -98,7 +98,7 @@ var remove = function remove(removeCh, path, value) {
 
 // refining
 var refine = function refine(value, setCh, removeCh, fetchCh, persistCh, oldPath, newPath) {
-  var refinedValue = value.getIn(newPath.split('.'));
+  var refinedValue = value.getIn(newPath.toString().split('.'));
   var refinedPath = oldPath ? [oldPath, newPath].join('.') : newPath;
 
   return cursor(refinedValue, refinedPath, setCh, removeCh, fetchCh, persistCh);
