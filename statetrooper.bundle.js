@@ -101,12 +101,12 @@ var replace = function replace(ch, path, oldValue, newValue) {
 
 var set = function set(ch, path, oldValue, change) {
   var newValue = _immutable2['default'].fromJS(oldValue).merge(change);
-  (0, _put_on_chan2['default'])(ch, { path: path, value: newValue });
+  putOnChanIfChanged(ch, path, oldValue, newValue);
 };
 
 var add = function add(ch, path, oldValue, addition) {
   var newValue = oldValue.push(addition);
-  (0, _put_on_chan2['default'])(ch, { path: path, value: newValue });
+  putOnChanIfChanged(ch, path, oldValue, newValue);
 };
 
 var remove = function remove(removeCh, path, value) {
