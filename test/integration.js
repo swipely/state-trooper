@@ -16,10 +16,10 @@ go(function*() {
       activity: null
     },
 
-    chans: {
-      'serverReport': { read: serverReportReadChan },
-      'bio': { read: bioReadChan, write: bioWriteChan },
-      'activity': { read: activityReadChan }
+    dataStore: {
+      'serverReport': { fetcher: () => { return serverReportReadChan } },
+      'bio': { fetcher: () => { return bioReadChan }, persister: () => { return bioWriteChan } },
+      'activity': { fetcher: () => { return activityReadChan }}
     }
   });
 
