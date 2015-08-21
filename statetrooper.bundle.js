@@ -26,18 +26,25 @@ module.exports = exports["default"];
 Object.defineProperty(exports, '__esModule', {
   value: true
 });
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+var _immutable = require('immutable');
+
+var _immutable2 = _interopRequireDefault(_immutable);
+
 var buildUpdatedState = function buildUpdatedState(oldState, pathToNewState, newState) {
   if (pathToNewState) {
-    return oldState.setIn(pathToNewState.split('.'), newState);
+    return oldState.setIn(pathToNewState.split('.'), _immutable2['default'].fromJS(newState));
   } else {
-    return newState;
+    return _immutable2['default'].fromJS(newState);
   }
 };
 
 exports['default'] = buildUpdatedState;
 module.exports = exports['default'];
 
-},{}],3:[function(require,module,exports){
+},{"immutable":107}],3:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
