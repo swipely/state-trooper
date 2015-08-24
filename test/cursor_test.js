@@ -13,17 +13,15 @@ describe('cursor', () => {
 
   describe('()', () => {
     let cur;
-    let setCh;
-    let removeCh;
+    let mutateCh;
     let persistCh;
     let fetchCh;
 
     beforeEach(() => {
-      setCh = chan();
-      removeCh = chan();
+      mutateCh = chan();
       persistCh = chan();
       fetchCh = chan();
-      cur = cursor(state, '', setCh, removeCh, fetchCh, persistCh);
+      cur = cursor(state, [], mutateCh, fetchCh, persistCh);
     });
 
     it('returns a cursor bound to state', () => {
@@ -32,14 +30,14 @@ describe('cursor', () => {
 
     describe('#hasSameValue', () => {
       it('returns false when the cursors hold different state', () => {
-        const curA = cursor({foo: 'bar'}, '', setCh, removeCh, fetchCh, persistCh);
-        const curB = cursor({bar: 'foo'}, '', setCh, removeCh, fetchCh, persistCh);
+        const curA = cursor({foo: 'bar'}, '', mutateCh, fetchCh, persistCh);
+        const curB = cursor({bar: 'foo'}, '', mutateCh, fetchCh, persistCh);
         expect( curA.hasSameValue(curB) ).to.be(false);
       });
 
       it('returns true when the cursors hold the same state', () => {
-        const curA = cursor({foo: 'bar'}, '', setCh, removeCh, fetchCh, persistCh);
-        const curB = cursor({foo: 'bar'}, '', setCh, removeCh, fetchCh, persistCh);
+        const curA = cursor({foo: 'bar'}, '', mutateCh, fetchCh, persistCh);
+        const curB = cursor({foo: 'bar'}, '', mutateCh, fetchCh, persistCh);
         expect( curA.hasSameValue(curB) ).to.be(true);
       });
     });
@@ -48,28 +46,29 @@ describe('cursor', () => {
       it('returns a new cursor bound to the refined state', () => {
         const refined = cur.refine('foo.bar');
         expect(refined.deref()).to.eql({baz: 42});
-        expect(refined.path).to.be('foo.bar');
+        expect(refined.path).to.eql(['foo', 'bar']);
       });
     });
 
     describe('#replace', () => {
-      it('puts a complete change on the cursors set chan', (done) => {
+      it('puts a replace state change on the mutate chan', (done) => {
         go(function* () {
           cur.replace('newval');
-          const change = yield take(setCh);
-          expect(change).to.eql({ path: '', value: 'newval'});
+          const change = yield take(mutateCh);
+          expect(change).to.eql({ action: 'replace', path: [], value: 'newval'});
           done();
         });
       });
     });
 
     describe('#remove', () => {
-      it('puts a change on the cursors remove chan', (done) => {
+      it('puts a remove state change on the mutate chan', (done) => {
         go(function* () {
           cur.refine('foo').refine('bar').remove();
-          const change = yield take(removeCh);
-          expect( change.path ).to.eql('foo.bar');
-          expect( change.value.toJS() ).to.eql({baz: 42});
+          const change = yield take(mutateCh);
+          expect(change.action).to.be('remove');
+          expect(change.path).to.eql(['foo', 'bar']);
+          expect(change.value.toJS()).to.eql({ baz: 42 });
           done();
         });
       });
@@ -77,7 +76,7 @@ describe('cursor', () => {
 
     describe('when the current state is an object', () => {
       beforeEach(() => {
-        cur = cursor({ foo: 'baz', baz: 'beep' }, '', setCh, removeCh, fetchCh, persistCh);
+        cur = cursor({ foo: 'baz', baz: 'beep' }, '', mutateCh, fetchCh, persistCh);
       });
 
       it('exposes #set', () => {
@@ -85,12 +84,13 @@ describe('cursor', () => {
       });
 
       describe('#set', () => {
-        it('only changes the keys in the object passed', (done) => {
+        it('puts a set state change on the mutate chan', (done) => {
           go(function* () {
-            cur.set({foo: 'bar'});
-            const change = yield take(setCh);
-            expect( change.path ).to.eql('');
-            expect( change.value.toJS() ).to.eql({foo: 'bar', baz: 'beep'});
+            cur.set({ foo: 'bar' });
+            const change = yield take(mutateCh);
+            expect(change.action).to.be('set');
+            expect(change.path).to.eql([]);
+            expect(change.value.toJS()).to.eql({ foo: 'bar' });
             done();
           });
         });
@@ -99,7 +99,7 @@ describe('cursor', () => {
 
     describe('when the current state is an array', () => {
       beforeEach(() => {
-        cur = cursor([{ foo: 'baz' }], '', setCh, removeCh, fetchCh, persistCh);
+        cur = cursor([{ foo: 'baz' }], '', mutateCh, fetchCh, persistCh);
       });
 
       it('exposes #map', () => {
