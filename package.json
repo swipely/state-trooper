@@ -20,6 +20,7 @@
     "expect.js": "^0.3.1",
     "immutable": "^3.7.4",
     "mocha": "^1.21.5",
+    "sinon": "^1.16.1",
     "underscore": "1.7.0"
   },
   "devDependencies": {

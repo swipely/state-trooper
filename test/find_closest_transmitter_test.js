@@ -16,7 +16,7 @@ describe('findClosestTransmitter', function () {
     });
 
     it('can find the persister given a path at a lower level of the hierarchy', function () {
-      path = 'foo.bar.baz.what';
+      path = ['foo', 'bar', 'baz', 'what'];
 
       expect(findClosestTransmitter('persister', dataStore, path)).to.eql('mock persister value');
     });
@@ -32,7 +32,7 @@ describe('findClosestTransmitter', function () {
     });
 
     it('can find the persister given its exact path', function () {
-      path = 'foo.bar';
+      path = ['foo', 'bar'];
 
       expect(findClosestTransmitter('persister', dataStore, path)).to.eql('another mock persister value');
     });
