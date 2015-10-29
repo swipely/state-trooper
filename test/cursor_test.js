@@ -1,5 +1,5 @@
 import expect from 'expect.js';
-import { go, chan, put, take } from '../src/vendor/js-csp';
+import { go, chan, put, take } from 'js-csp';
 import cursor from '../src/cursor';
 
 describe('cursor', () => {

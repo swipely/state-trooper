@@ -1,6 +1,6 @@
 import _ from 'underscore';
 import Immutable from 'immutable';
-import { go, chan, take, put } from './vendor/js-csp';
+import { go, chan, take, put } from 'js-csp';
 
 import cursor from './cursor';
 import convertToNative from './convert_to_native';

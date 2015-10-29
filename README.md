@@ -3,14 +3,6 @@ state trooper
 
 ![](https://travis-ci.org/swipely/state-trooper.svg?branch=master)
 
-# Dependencies
-
-StateTrooper uses generator functions and js-csp.  You can use babeljs for
-transpilation of your code, but currently it won't transpile libs in
-node_modules. For this reason js-csp is vendored at version 0.4.1.  If you want
-to use StateTrooper in node and with babeljs, you'll need to vendor
-StateTrooper in a similar way.
-
 # Example Usage
 
 Call `StateTrooper.patrol` in your route handler/main app entry point

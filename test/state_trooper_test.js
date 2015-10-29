@@ -1,5 +1,5 @@
 const expect = require('expect.js');
-const csp = require('../src/vendor/js-csp');
+const csp = require('js-csp');
 const StateTrooper = require('../src/state_trooper');
 const sinon = require('sinon');
 

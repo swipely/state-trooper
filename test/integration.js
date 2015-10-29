@@ -1,5 +1,5 @@
 // run with babel-node
-import { go, chan, take, put } from "../src/vendor/js-csp";
+import { go, chan, take, put } from "js-csp";
 import StateTrooper from '../src/state_trooper';
 
 const serverReportReadChan = chan();
