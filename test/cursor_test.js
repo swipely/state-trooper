@@ -1,6 +1,6 @@
 import expect from 'expect.js';
-import { go, chan, put, take } from '../vendor/js-csp';
-import cursor from '../lib/cursor';
+import { go, chan, put, take } from '../src/vendor/js-csp';
+import cursor from '../src/cursor';
 
 describe('cursor', () => {
   const state = {

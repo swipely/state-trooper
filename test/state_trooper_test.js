@@ -1,8 +1,6 @@
-"use strict";
-
 const expect = require('expect.js');
-const csp = require('../vendor/js-csp');
-const StateTrooper = require('../lib/state_trooper');
+const csp = require('../src/vendor/js-csp');
+const StateTrooper = require('../src/state_trooper');
 const sinon = require('sinon');
 
 const go = csp.go;

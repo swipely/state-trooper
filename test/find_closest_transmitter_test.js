@@ -1,7 +1,5 @@
-"use strict";
-
 const expect = require('expect.js');
-const findClosestTransmitter = require('../lib/find_closest_transmitter');
+const findClosestTransmitter = require('../src/find_closest_transmitter');
 
 describe('findClosestTransmitter', function () {
   var dataStore, path;
