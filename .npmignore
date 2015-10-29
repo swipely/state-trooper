@@ -1,0 +1,6 @@
+test
+log
+*.log
+VERSION
+.DS_Store
+src

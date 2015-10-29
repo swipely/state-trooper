@@ -1,11 +1,11 @@
 {
   "name": "state-trooper",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Application State Manager",
   "main": "index.js",
   "scripts": {
-    "package": "browserify index.js -t babelify --outfile statetrooper.bundle.js",
-    "test": "./node_modules/mocha/bin/mocha --compilers js:babel/register test/**_test.js"
+    "test": "./node_modules/mocha/bin/mocha --compilers js:babel/register test/**_test.js",
+    "prepublish": "babel src/ -d dist/"
   },
   "repository": {
     "type": "git",
@@ -24,8 +24,6 @@
     "underscore": "1.7.0"
   },
   "devDependencies": {
-    "babel": "^5.6.7",
-    "babelify": "^6.1.2",
-    "browserify": "^10.2.4"
+    "babel": "^5.6.7"
   }
 }

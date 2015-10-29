@@ -1,6 +1,6 @@
 import expect from 'expect.js';
 import Immutable from 'immutable';
-import applyStateChange from '../lib/apply_state_change';
+import applyStateChange from '../src/apply_state_change';
 
 describe('applyStateChange', () => {
   let state;
