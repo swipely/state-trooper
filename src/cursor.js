@@ -17,6 +17,10 @@ const isEqual = function (valueA, valueB) {
 };
 
 function deref(value) {
+  return value;
+}
+
+function derefJS(value) {
   return convertToNative(value);
 }
 
@@ -60,6 +64,7 @@ const cursor = function (value, path, mutateCh, fetchCh, persistCh) {
 
   let o = {
     deref:    partial(deref, imVal),
+    derefJS:  partial(derefJS, imVal),
     path:     path,
 
     replace:  partial(replace, mutateCh, path),
