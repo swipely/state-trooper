@@ -25,7 +25,7 @@ describe('cursor', () => {
     });
 
     it('returns a cursor bound to state', () => {
-      expect(cur.deref()).to.eql({ foo: { bar: { baz: 42 }}});
+      expect(cur.derefJS()).to.eql({ foo: { bar: { baz: 42 }}});
     });
 
     describe('#hasSameValue', () => {
@@ -45,7 +45,7 @@ describe('cursor', () => {
     describe('#refine', () => {
       it('returns a new cursor bound to the refined state', () => {
         const refined = cur.refine('foo.bar');
-        expect(refined.deref()).to.eql({baz: 42});
+        expect(refined.derefJS()).to.eql({baz: 42});
         expect(refined.path).to.eql(['foo', 'bar']);
       });
     });
