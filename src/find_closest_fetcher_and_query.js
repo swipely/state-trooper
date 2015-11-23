@@ -1,4 +1,4 @@
-function findClosestFetcherAndQuery(type, dataStore, path) {
+function findClosestFetcherAndQuery(dataStore, path) {
   let pathStr = path.join('.');
 
   if (!dataStore) {
