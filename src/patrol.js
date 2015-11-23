@@ -7,12 +7,12 @@ import convertToNative from './convert_to_native';
 import putOnChan from './put_on_chan';
 import getStateByPath from'./get_state_by_path';
 import findClosestTransmitter from'./find_closest_transmitter';
+import findClosestFetcherAndQuery from'./find_closest_fetcher_and_query';
 import applyStateChange from './apply_state_change';
 
 const { each, partial } = _;
 
 const findClosestPersister = partial(findClosestTransmitter, 'persister');
-const findClosestFetcher = partial(findClosestTransmitter, 'fetcher');
 
 const patrol = function (stateDescriptor) {
   const dataStore = stateDescriptor.dataStore;
@@ -34,7 +34,7 @@ const patrol = function (stateDescriptor) {
   // fetch initial data
   each(dataStore, (conf, path) => {
     if (conf.fetcher && conf.initialFetch !== false) {
-      conf.fetcher(rootCursor.refine(path), rootCursor);
+      conf.fetcher(rootCursor.refine(path), rootCursor, conf.query);
     }
   });
 
@@ -68,10 +68,10 @@ const patrol = function (stateDescriptor) {
   go(function* () {
     while (true) {
       const path = yield take(fetchCh);
-      const fetcher = findClosestFetcher(dataStore, path);
+      const { fetcher, query } = findClosestFetcherAndQuery(dataStore, path);
 
       if (fetcher) {
-        fetcher(rootCursor.refine(path), rootCursor);
+        fetcher(rootCursor.refine(path), rootCursor, query);
       }
     }
   });
