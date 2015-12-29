@@ -1,6 +1,6 @@
 {
   "name": "state-trooper",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Application State Manager",
   "main": "index.js",
   "scripts": {
@@ -17,14 +17,14 @@
   },
   "homepage": "https://github.com/swipely/state-trooper",
   "dependencies": {
-    "expect.js": "^0.3.1",
     "immutable": "^3.7.4",
     "js-csp": "^0.5.0",
-    "mocha": "^1.21.5",
-    "sinon": "^1.16.1",
     "underscore": "1.7.0"
   },
   "devDependencies": {
+    "sinon": "^1.16.1",
+    "mocha": "^1.21.5",
+    "expect.js": "^0.3.1",
     "babel": "^5.6.7"
   }
 }

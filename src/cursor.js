@@ -1,4 +1,4 @@
-import { partial, map, filter, find, isArray } from 'underscore';
+import { partial, isArray } from 'underscore';
 import convertToNative from './convert_to_native';
 import Immutable from 'immutable';
 import putOnChan from './put_on_chan';
