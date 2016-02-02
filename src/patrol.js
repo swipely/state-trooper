@@ -33,7 +33,7 @@ const patrol = function (stateDescriptor) {
 
   // fetch initial data
   each(dataStore, (conf, path) => {
-    if (conf.fetcher && conf.initialFetch !== false) {
+    if (conf.fetcher && conf.initialFetch) {
       conf.fetcher(rootCursor.refine(path), rootCursor, conf.query);
     }
   });
