@@ -78,6 +78,10 @@ const cursor = function (value, path, mutateCh, fetchCh, persistCh) {
     hasSameValue:  partial(hasSameValue, imVal)
   };
 
+  Object.defineProperty(o, "value", {
+    get: partial(derefJS, imVal)
+  });
+
   if (Immutable.List.isList(imVal)) {
     // array specific operations
     o.map = partial(cMap, imVal);
