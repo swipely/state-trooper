@@ -1,4 +1,4 @@
-import { partial, isArray } from 'underscore';
+import { memoize, partial, isArray, isEmpty } from 'underscore';
 import convertToNative from './convert_to_native';
 import Immutable from 'immutable';
 import putOnChan from './put_on_chan';
@@ -20,9 +20,10 @@ function deref(value) {
   return value;
 }
 
-function derefJS(value) {
-  return convertToNative(value);
-}
+const derefJS = memoize(
+  convertToNative,
+  (value) => isEmpty(value) ? value : value.hashCode()
+);
 
 // "mutations"
 function replace(ch, path, value) {
