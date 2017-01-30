@@ -3,18 +3,18 @@ import convertToNative from './convert_to_native';
 import Immutable from 'immutable';
 import putOnChan from './put_on_chan';
 
-const hasSameValue = function (valueA, cursorB) {
+function hasSameValue(valueA, cursorB) {
   return isEqual(valueA, Immutable.fromJS(cursorB.deref()));
-};
+}
 
-const isEqual = function (valueA, valueB) {
+function isEqual(valueA, valueB) {
   if (valueA) {
     return Immutable.is(valueA, valueB);
   }
   else {
     return valueA === valueB;
   }
-};
+}
 
 function deref(value) {
   return value;
@@ -22,37 +22,45 @@ function deref(value) {
 
 const derefJS = memoize(
   convertToNative,
-  (value) => isEmpty(value) ? value : value.hashCode()
+  (value) => isEmpty(value) || value.hashCode ? value : value.hashCode()
 );
 
-// "mutations"
+// mutations and data store interactions
 function replace(ch, path, value) {
-  mutate(ch, { path, value: Immutable.fromJS(value), action: 'replace' });
+  update(ch, { path, value: Immutable.fromJS(value), action: 'replace' });
 }
 
 function set(ch, path, value) {
-  mutate(ch, { path, value: Immutable.fromJS(value), action: 'set' });
+  update(ch, { path, value: Immutable.fromJS(value), action: 'set' });
 }
 
 function add(ch, path, value) {
-  mutate(ch, { path, value: Immutable.fromJS(value), action: 'add' });
+  update(ch, { path, value: Immutable.fromJS(value), action: 'add' });
 }
 
 function remove(ch, path, value) {
-  mutate(ch, { path, value, action: 'remove' });
+  update(ch, { path, value, action: 'remove' });
 }
 
-function mutate(ch, change) {
+function persist(ch, path) {
+  update(ch, { path, value: null, action: 'persist' });
+}
+
+function fetch(ch, path) {
+  update(ch, { path, value: null, action: 'fetch' });
+}
+
+function update(ch, change) {
   putOnChan(ch, change);
 }
 
 // refining
-function refine(value, mutateCh, fetchCh, persistCh, oldPath, newPath) {
+function refine(value, updateCh, oldPath, newPath) {
   const newPathArr = isArray(newPath) ? newPath : newPath.toString().split('.');
   const refinedValue = value.getIn(newPathArr);
   const refinedPath = oldPath.concat(newPathArr);
 
-  return cursor(refinedValue, refinedPath, mutateCh, fetchCh, persistCh);
+  return cursor(refinedValue, refinedPath, updateCh);
 }
 
 // array helpers
@@ -60,7 +68,7 @@ function cMap(value, mapper) {
   return value.map((v, i) => mapper(cursor.refine(i), i));
 }
 
-const cursor = function (value, path, mutateCh, fetchCh, persistCh) {
+const cursor = function (value, path, updateCh) {
   const imVal = Immutable.fromJS(value);
 
   let o = {
@@ -68,13 +76,13 @@ const cursor = function (value, path, mutateCh, fetchCh, persistCh) {
     derefJS:  partial(derefJS, imVal),
     path:     path,
 
-    replace:  partial(replace, mutateCh, path),
-    remove:   partial(remove, mutateCh, path, imVal),
+    replace:  partial(replace, updateCh, path),
+    remove:   partial(remove, updateCh, path, imVal),
 
-    refine:   partial(refine, imVal, mutateCh, fetchCh, persistCh, path),
+    refine:   partial(refine, imVal, updateCh, path),
 
-    persist:  partial(putOnChan, persistCh, path),
-    fetch:    partial(putOnChan, fetchCh, path),
+    persist:  partial(persist, updateCh, path),
+    fetch:    partial(fetch, updateCh, path),
 
     hasSameValue:  partial(hasSameValue, imVal)
   };
@@ -86,10 +94,11 @@ const cursor = function (value, path, mutateCh, fetchCh, persistCh) {
   if (Immutable.List.isList(imVal)) {
     // array specific operations
     o.map = partial(cMap, imVal);
-    o.add = partial(add, mutateCh, path);
+    o.add = partial(add, updateCh, path);
   }
+
   if (Immutable.Map.isMap(imVal)) {
-    o.set = partial(set, mutateCh, path);
+    o.set = partial(set, updateCh, path);
   }
 
   return o;
