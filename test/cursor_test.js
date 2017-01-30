@@ -13,15 +13,11 @@ describe('cursor', () => {
 
   describe('()', () => {
     let cur;
-    let mutateCh;
-    let persistCh;
-    let fetchCh;
+    let updateCh;
 
     beforeEach(() => {
-      mutateCh = chan();
-      persistCh = chan();
-      fetchCh = chan();
-      cur = cursor(state, [], mutateCh, fetchCh, persistCh);
+      updateCh = chan();
+      cur = cursor(state, [], updateCh);
     });
 
     it('returns a cursor bound to state', () => {
@@ -30,14 +26,14 @@ describe('cursor', () => {
 
     describe('#hasSameValue', () => {
       it('returns false when the cursors hold different state', () => {
-        const curA = cursor({foo: 'bar'}, '', mutateCh, fetchCh, persistCh);
-        const curB = cursor({bar: 'foo'}, '', mutateCh, fetchCh, persistCh);
+        const curA = cursor({foo: 'bar'}, '', updateCh);
+        const curB = cursor({bar: 'foo'}, '', updateCh);
         expect( curA.hasSameValue(curB) ).to.be(false);
       });
 
       it('returns true when the cursors hold the same state', () => {
-        const curA = cursor({foo: 'bar'}, '', mutateCh, fetchCh, persistCh);
-        const curB = cursor({foo: 'bar'}, '', mutateCh, fetchCh, persistCh);
+        const curA = cursor({foo: 'bar'}, '', updateCh);
+        const curB = cursor({foo: 'bar'}, '', updateCh);
         expect( curA.hasSameValue(curB) ).to.be(true);
       });
     });
@@ -51,10 +47,10 @@ describe('cursor', () => {
     });
 
     describe('#replace', () => {
-      it('puts a replace state change on the mutate chan', (done) => {
+      it('puts a replace state change on the update chan', (done) => {
         go(function* () {
           cur.replace('newval');
-          const change = yield take(mutateCh);
+          const change = yield take(updateCh);
           expect(change).to.eql({ action: 'replace', path: [], value: 'newval'});
           done();
         });
@@ -62,10 +58,10 @@ describe('cursor', () => {
     });
 
     describe('#remove', () => {
-      it('puts a remove state change on the mutate chan', (done) => {
+      it('puts a remove state change on the update chan', (done) => {
         go(function* () {
           cur.refine('foo').refine('bar').remove();
-          const change = yield take(mutateCh);
+          const change = yield take(updateCh);
           expect(change.action).to.be('remove');
           expect(change.path).to.eql(['foo', 'bar']);
           expect(change.value.toJS()).to.eql({ baz: 42 });
@@ -76,7 +72,7 @@ describe('cursor', () => {
 
     describe('when the current state is an object', () => {
       beforeEach(() => {
-        cur = cursor({ foo: 'baz', baz: 'beep' }, '', mutateCh, fetchCh, persistCh);
+        cur = cursor({ foo: 'baz', baz: 'beep' }, '', updateCh);
       });
 
       it('exposes #set', () => {
@@ -84,10 +80,10 @@ describe('cursor', () => {
       });
 
       describe('#set', () => {
-        it('puts a set state change on the mutate chan', (done) => {
+        it('puts a set state change on the update chan', (done) => {
           go(function* () {
             cur.set({ foo: 'bar' });
-            const change = yield take(mutateCh);
+            const change = yield take(updateCh);
             expect(change.action).to.be('set');
             expect(change.path).to.eql([]);
             expect(change.value.toJS()).to.eql({ foo: 'bar' });
@@ -99,7 +95,7 @@ describe('cursor', () => {
 
     describe('when the current state is an array', () => {
       beforeEach(() => {
-        cur = cursor([{ foo: 'baz' }], '', mutateCh, fetchCh, persistCh);
+        cur = cursor([{ foo: 'baz' }], '', updateCh);
       });
 
       it('exposes #map', () => {
@@ -109,22 +105,22 @@ describe('cursor', () => {
 
     describe('data store', () => {
       describe('#persist', () => {
-        it('puts on the cursors persist chan', (done) => {
+        it('puts a persist action on the update chan', (done) => {
           go(function* () {
             cur.persist();
-            const op = yield take(persistCh);
-            expect(op).to.eql('');
+            const update = yield take(updateCh);
+            expect(update.action).to.be('persist');
             done();
           });
         });
       });
 
       describe('#fetch', () => {
-        it('puts on the cursors fetch chan', (done) => {
+        it('puts a fetch action on the update chan', (done) => {
           go(function* () {
             cur.fetch();
-            const op = yield take(fetchCh);
-            expect(op).to.eql('');
+            const update = yield take(updateCh);
+            expect(update.action).to.be('fetch');
             done();
           });
         });

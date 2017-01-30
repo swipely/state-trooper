@@ -1,5 +1,4 @@
 function applyStateChange(state, { path, action, value }) {
-
   switch (action) {
     case "set":
       return state.mergeIn(path, value);
@@ -10,6 +9,8 @@ function applyStateChange(state, { path, action, value }) {
       return state.removeIn(path);
     case "replace":
       return state.setIn(path, value);
+    default:
+      return state;
   }
 }
 

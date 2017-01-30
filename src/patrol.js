@@ -19,10 +19,8 @@ const patrol = function (stateDescriptor) {
 
   const mainCursorCh = chan();
 
-  const mutateCh = chan();
-  const persistCh = chan();
-  const fetchCh = chan();
-  const createCursor = partial(cursor, _, [], mutateCh, fetchCh, persistCh);
+  const updateCh = chan();
+  const createCursor = partial(cursor, _, [], updateCh);
 
   let currentState = Immutable.fromJS(stateDescriptor.state);
   let rootCursor = createCursor(currentState);
@@ -38,40 +36,32 @@ const patrol = function (stateDescriptor) {
     }
   });
 
-  // respond to mutation requests
+  // respond to updates from the cursor
   go(function* () {
-    let change;
+    let update;
 
-    while (change = yield take(mutateCh)) {
-      unpersistedChanges.push(change);
-      currentState = applyStateChange(currentState, change);
-      rootCursor = createCursor(currentState);
-      putOnChan(mainCursorCh, rootCursor);
-    }
-  });
+    while (update = yield take(updateCh)) {
+      if (update.action === 'fetch') {
+        const { fetcher, query } = findClosestFetcherAndQuery(dataStore, update.path);
 
-  // react to any persist requests
-  go(function* () {
-    while (true) {
-      const path = yield take(persistCh);
-      const persister = findClosestPersister(dataStore, path);
-
-      if (persister) {
-        persister(rootCursor.refine(path), unpersistedChanges.pop(), rootCursor);
+        if (fetcher) {
+          fetcher(rootCursor.refine(update.path), rootCursor, query);
+        }
       }
+      else if (update.action === 'persist') {
+        const persister = findClosestPersister(dataStore, update.path);
 
-      unpersistedChanges = [];
-    }
-  });
+        if (persister) {
+          persister(rootCursor.refine(update.path), unpersistedChanges.pop(), rootCursor);
+        }
 
-  // react to any fetch requests
-  go(function* () {
-    while (true) {
-      const path = yield take(fetchCh);
-      const { fetcher, query } = findClosestFetcherAndQuery(dataStore, path);
-
-      if (fetcher) {
-        fetcher(rootCursor.refine(path), rootCursor, query);
+        unpersistedChanges = [];
+      }
+      else {
+        unpersistedChanges.push(update);
+        currentState = applyStateChange(currentState, update);
+        rootCursor = createCursor(currentState);
+        putOnChan(mainCursorCh, rootCursor);
       }
     }
   });
