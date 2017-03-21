@@ -61,6 +61,11 @@ const patrol = function (stateDescriptor) {
         unpersistedChanges.push(update);
         currentState = applyStateChange(currentState, update);
         rootCursor = createCursor(currentState);
+
+        if (typeof update.callback === 'function') {
+          update.callback(rootCursor.refine(update.path), rootCursor);
+        }
+
         putOnChan(mainCursorCh, rootCursor);
       }
     }

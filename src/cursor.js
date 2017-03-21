@@ -26,20 +26,20 @@ const derefJS = memoize(
 );
 
 // mutations and data store interactions
-function replace(ch, path, value) {
-  update(ch, { path, value: Immutable.fromJS(value), action: 'replace' });
+function replace(ch, path, value, callback = null) {
+  update(ch, { path, value: Immutable.fromJS(value), action: 'replace', callback: callback });
 }
 
-function set(ch, path, value) {
-  update(ch, { path, value: Immutable.fromJS(value), action: 'set' });
+function set(ch, path, value, callback = null) {
+  update(ch, { path, value: Immutable.fromJS(value), action: 'set', callback: callback });
 }
 
-function add(ch, path, value) {
-  update(ch, { path, value: Immutable.fromJS(value), action: 'add' });
+function add(ch, path, value, callback = null) {
+  update(ch, { path, value: Immutable.fromJS(value), action: 'add', callback: callback });
 }
 
-function remove(ch, path, value) {
-  update(ch, { path, value, action: 'remove' });
+function remove(ch, path, value, callback = null) {
+  update(ch, { path, value, action: 'remove', callback: callback });
 }
 
 function persist(ch, path) {
