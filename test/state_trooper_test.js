@@ -57,8 +57,9 @@ describe('StateTrooper', function () {
         it('calls the callback with the new cursor', (done) => {
           go(function* () {
             let cursor = yield take(cursorChan);
-            cursor.refine('foo').replace('beep', (newCur) => {
+            cursor.refine('foo').replace('beep', (newCur, rootCur) => {
               expect( newCur.deref() ).to.eql('beep');
+              expect( rootCur.refine('foo').deref() ).to.eql('beep');
               done();
             });
           });

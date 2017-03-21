@@ -63,7 +63,7 @@ const patrol = function (stateDescriptor) {
         rootCursor = createCursor(currentState);
 
         if (typeof update.callback === 'function') {
-          update.callback(rootCursor.refine(update.path));
+          update.callback(rootCursor.refine(update.path), rootCursor);
         }
 
         putOnChan(mainCursorCh, rootCursor);
