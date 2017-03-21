@@ -51,8 +51,20 @@ describe('cursor', () => {
         go(function* () {
           cur.replace('newval');
           const change = yield take(updateCh);
-          expect(change).to.eql({ action: 'replace', path: [], value: 'newval'});
+          expect(change).to.eql({ action: 'replace', path: [], value: 'newval', callback: null});
           done();
+        });
+      });
+
+      describe('with a callback', () => {
+        it('has a callback in the replace state change on the update chan', (done) => {
+          go(function* () {
+            const cb = (x) => x;
+            cur.replace('newval', cb);
+            const change = yield take(updateCh);
+            expect(change).to.eql({ action: 'replace', path: [], value: 'newval', callback: cb });
+            done();
+          });
         });
       });
     });

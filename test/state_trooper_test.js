@@ -51,6 +51,20 @@ describe('StateTrooper', function () {
         });
       });
     });
+
+    describe('cursor.replace', () => {
+      describe('with a callback', () => {
+        it('calls the callback with the new cursor', (done) => {
+          go(function* () {
+            let cursor = yield take(cursorChan);
+            cursor.refine('foo').replace('beep', (newCur) => {
+              expect( newCur.deref() ).to.eql('beep');
+              done();
+            });
+          });
+        });
+      });
+    });
   });
 
 });
