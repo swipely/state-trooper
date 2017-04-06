@@ -1,6 +1,6 @@
 {
   "name": "state-trooper",
-  "version": "0.5.5",
+  "version": "0.5.6",
   "description": "Application State Manager",
   "main": "index.js",
   "scripts": {
