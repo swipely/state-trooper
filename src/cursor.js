@@ -22,7 +22,7 @@ function deref(value) {
 
 const derefJS = memoize(
   convertToNative,
-  (value) => isEmpty(value) || value.hashCode ? value : value.hashCode()
+  (value) => (isEmpty(value) || typeof value.hashCode !== 'function') ? value : value.hashCode()
 );
 
 // mutations and data store interactions
