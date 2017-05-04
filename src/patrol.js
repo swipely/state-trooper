@@ -1,4 +1,3 @@
-import _ from 'underscore';
 import { go, chan, take, put } from 'js-csp';
 
 import cursor from './cursor';
@@ -8,17 +7,21 @@ import findClosestTransmitter from'./find_closest_transmitter';
 import findClosestFetcherAndQuery from'./find_closest_fetcher_and_query';
 import applyStateChange from './apply_state_change';
 
-const { each, partial } = _;
+function each(obj, fn) {
+  Object.keys(obj).forEach(key => fn(obj[key], key));
+}
 
-const findClosestPersister = partial(findClosestTransmitter, 'persister');
+const findClosestPersister = findClosestTransmitter.bind(this, 'persister');
 
 const patrol = function (stateDescriptor) {
   const dataStore = stateDescriptor.dataStore;
 
   const mainCursorCh = chan();
-
   const updateCh = chan();
-  const createCursor = partial(cursor, _, [], updateCh);
+
+  function createCursor(v) {
+    return cursor(v, [], updateCh);
+  }
 
   let currentState = stateDescriptor.state;
   let rootCursor = createCursor(currentState);
