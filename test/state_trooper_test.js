@@ -1,7 +1,7 @@
 const expect = require('expect.js');
+const sinon = require('sinon');
 const csp = require('js-csp');
 const StateTrooper = require('../src/state_trooper');
-const sinon = require('sinon');
 
 const go = csp.go;
 const chan = csp.chan;
@@ -68,4 +68,39 @@ describe('StateTrooper', function () {
     });
   });
 
+  describe('.stakeout', function () {
+    let cursorChan;
+
+    beforeEach(function () {
+      cursorChan = StateTrooper.patrol({
+        state: {
+          something: { a: [1, 2, 3] },
+          somethingElse: { a: [-1, -2, -3] }
+        },
+        dataStore: {
+        }
+      });
+    });
+
+    it('can create a stakeout', function (done) {
+      let result = [];
+
+      StateTrooper.stakeout('something.a', (update, cursor) => {
+        result.push(update.value);
+
+        if (result.length === 3) {
+          expect( result ).to.eql([4, 5, 6])
+          done();
+        }
+      });
+
+      go(function* () {
+        let cursor = yield take(cursorChan);
+
+        cursor.refine('something.a').add(4);
+        cursor.refine('something.a').add(5);
+        cursor.refine('something.a').add(6);
+      });
+    });
+  });
 });

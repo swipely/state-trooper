@@ -6,6 +6,7 @@ import getStateByPath from'./get_state_by_path';
 import findClosestTransmitter from'./find_closest_transmitter';
 import findClosestFetcherAndQuery from'./find_closest_fetcher_and_query';
 import applyStateChange from './apply_state_change';
+import { notifyStakeouts } from './stakeout';
 
 function each(obj, fn) {
   Object.keys(obj).forEach(key => fn(obj[key], key));
@@ -68,6 +69,7 @@ const patrol = function (stateDescriptor) {
         }
 
         putOnChan(mainCursorCh, rootCursor);
+        notifyStakeouts(update.path, update, rootCursor);
       }
     }
   });
