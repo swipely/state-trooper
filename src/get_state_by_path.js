@@ -1,9 +1,21 @@
-import Immutable from 'immutable';
-import { isArray } from 'underscore';
+/**
+ * A very simple implementation of a safe method to get a value from an object hierarchy.
+ *
+ * @param {any} value
+ * @param {string[]} path
+ */
+function getValueForKeyPath(value, path) {
+  for (let key of path) {
+    if (value == null) {
+      return value;
+    }
+    value = value[key];
+  }
+  return value;
+}
 
 const getStateByPath = function (state, path) {
-  const imVal = Immutable.fromJS(state);
-  return imVal.getIn(isArray(path) ? path : path.split('.'));
+  return getValueForKeyPath(state, Array.isArray(path) ? path : path.split('.'));
 };
 
 export default getStateByPath;

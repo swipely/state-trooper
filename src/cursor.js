@@ -1,41 +1,49 @@
-import { memoize, partial, isArray, isEmpty } from 'underscore';
-import convertToNative from './convert_to_native';
-import Immutable from 'immutable';
+import isEqual from 'lodash.isequal';
+import getStateByPath from './get_state_by_path';
 import putOnChan from './put_on_chan';
 
-function hasSameValue(valueA, cursorB) {
-  return isEqual(valueA, Immutable.fromJS(cursorB.deref()));
+function equals(valueA, cursorB) {
+  return valuesEqual(valueA, cursorB.deref());
 }
 
-function isEqual(valueA, valueB) {
-  if (valueA) {
-    return Immutable.is(valueA, valueB);
+function valuesEqual(valueA, valueB) {
+  if (valueA === valueB) {
+    return true;
   }
-  else {
-    return valueA === valueB;
+
+  // try an equals method
+  if (hasMethod(valueA, 'equals') && hasMethod(valueB, 'equals')) {
+    return valueA.equals(valueB);
   }
+
+  // try result of valueOf method, only if it returns a distinct value
+  if (hasMethod(valueA, 'valueOf') && hasMethod(valueB, 'valueOf') && valueA.valueOf() !== valueA) {
+    return (valueA.valueOf() === valueB.valueOf());
+  }
+
+  // let lodash figure it out
+  return isEqual(valueA, valueB);
+}
+
+function hasMethod(o, name) {
+  return o != null && typeof o === 'object' && typeof o[name] === 'function';
 }
 
 function deref(value) {
   return value;
 }
 
-const derefJS = memoize(
-  convertToNative,
-  (value) => (isEmpty(value) || typeof value.hashCode !== 'function') ? value : value.hashCode()
-);
-
 // mutations and data store interactions
 function replace(ch, path, value, callback = null) {
-  update(ch, { path, value: Immutable.fromJS(value), action: 'replace', callback: callback });
+  update(ch, { path, value: value, action: 'replace', callback: callback });
 }
 
 function set(ch, path, value, callback = null) {
-  update(ch, { path, value: Immutable.fromJS(value), action: 'set', callback: callback });
+  update(ch, { path, value: value, action: 'set', callback: callback });
 }
 
 function add(ch, path, value, callback = null) {
-  update(ch, { path, value: Immutable.fromJS(value), action: 'add', callback: callback });
+  update(ch, { path, value: value, action: 'add', callback: callback });
 }
 
 function remove(ch, path, value, callback = null) {
@@ -56,49 +64,38 @@ function update(ch, change) {
 
 // refining
 function refine(value, updateCh, oldPath, newPath) {
-  const newPathArr = isArray(newPath) ? newPath : newPath.toString().split('.');
-  const refinedValue = value.getIn(newPathArr);
+  const newPathArr = Array.isArray(newPath) ? newPath : newPath.toString().split('.');
+  const refinedValue = getStateByPath(value, newPathArr);
   const refinedPath = oldPath.concat(newPathArr);
 
   return cursor(refinedValue, refinedPath, updateCh);
 }
 
-// array helpers
-function cMap(value, mapper) {
-  return value.map((v, i) => mapper(cursor.refine(i), i));
-}
-
 const cursor = function (value, path, updateCh) {
-  const imVal = Immutable.fromJS(value);
 
   let o = {
-    deref:    partial(deref, imVal),
-    derefJS:  partial(derefJS, imVal),
+    deref:    deref.bind(this, value),
     path:     path,
 
-    replace:  partial(replace, updateCh, path),
-    remove:   partial(remove, updateCh, path, imVal),
+    replace:  replace.bind(this, updateCh, path),
+    remove:   remove.bind(this, updateCh, path, value),
 
-    refine:   partial(refine, imVal, updateCh, path),
+    refine:   refine.bind(this, value, updateCh, path),
 
-    persist:  partial(persist, updateCh, path),
-    fetch:    partial(fetch, updateCh, path),
+    persist:  persist.bind(this, updateCh, path),
+    fetch:    fetch.bind(this, updateCh, path),
 
-    hasSameValue:  partial(hasSameValue, imVal)
+    equals:   equals.bind(this, value)
   };
 
-  Object.defineProperty(o, "value", {
-    get: partial(derefJS, imVal)
-  });
-
-  if (Immutable.List.isList(imVal)) {
+  if (Array.isArray(value)) {
     // array specific operations
-    o.map = partial(cMap, imVal);
-    o.add = partial(add, updateCh, path);
+    o.add = add.bind(this, updateCh, path);
   }
 
-  if (Immutable.Map.isMap(imVal)) {
-    o.set = partial(set, updateCh, path);
+  if (hasMethod(value, 'valueOf')) {
+    // object specific operations
+    o.set = set.bind(this, updateCh, path);
   }
 
   return o;

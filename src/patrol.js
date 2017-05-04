@@ -1,9 +1,7 @@
 import _ from 'underscore';
-import Immutable from 'immutable';
 import { go, chan, take, put } from 'js-csp';
 
 import cursor from './cursor';
-import convertToNative from './convert_to_native';
 import putOnChan from './put_on_chan';
 import getStateByPath from'./get_state_by_path';
 import findClosestTransmitter from'./find_closest_transmitter';
@@ -22,7 +20,7 @@ const patrol = function (stateDescriptor) {
   const updateCh = chan();
   const createCursor = partial(cursor, _, [], updateCh);
 
-  let currentState = Immutable.fromJS(stateDescriptor.state);
+  let currentState = stateDescriptor.state;
   let rootCursor = createCursor(currentState);
   let unpersistedChanges = [];
 

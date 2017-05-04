@@ -46,7 +46,7 @@ describe('StateTrooper', function () {
           let cursor = yield take(cursorChan);
           cursor.set({ foo: 'baz' });
           cursor = yield take(cursorChan);
-          expect( cursor.derefJS() ).to.eql({ foo: 'baz' });
+          expect( cursor.deref() ).to.eql({ foo: 'baz' });
           done();
         });
       });

@@ -21,27 +21,27 @@ describe('cursor', () => {
     });
 
     it('returns a cursor bound to state', () => {
-      expect(cur.derefJS()).to.eql({ foo: { bar: { baz: 42 }}});
+      expect(cur.deref()).to.eql({ foo: { bar: { baz: 42 }}});
     });
 
-    describe('#hasSameValue', () => {
+    describe('#equals', () => {
       it('returns false when the cursors hold different state', () => {
         const curA = cursor({foo: 'bar'}, '', updateCh);
         const curB = cursor({bar: 'foo'}, '', updateCh);
-        expect( curA.hasSameValue(curB) ).to.be(false);
+        expect( curA.equals(curB) ).to.be(false);
       });
 
       it('returns true when the cursors hold the same state', () => {
         const curA = cursor({foo: 'bar'}, '', updateCh);
         const curB = cursor({foo: 'bar'}, '', updateCh);
-        expect( curA.hasSameValue(curB) ).to.be(true);
+        expect( curA.equals(curB) ).to.be(true);
       });
     });
 
     describe('#refine', () => {
       it('returns a new cursor bound to the refined state', () => {
         const refined = cur.refine('foo.bar');
-        expect(refined.derefJS()).to.eql({baz: 42});
+        expect(refined.deref()).to.eql({baz: 42});
         expect(refined.path).to.eql(['foo', 'bar']);
       });
     });
@@ -76,7 +76,7 @@ describe('cursor', () => {
           const change = yield take(updateCh);
           expect(change.action).to.be('remove');
           expect(change.path).to.eql(['foo', 'bar']);
-          expect(change.value.toJS()).to.eql({ baz: 42 });
+          expect(change.value).to.eql({ baz: 42 });
           done();
         });
       });
@@ -98,7 +98,7 @@ describe('cursor', () => {
             const change = yield take(updateCh);
             expect(change.action).to.be('set');
             expect(change.path).to.eql([]);
-            expect(change.value.toJS()).to.eql({ foo: 'bar' });
+            expect(change.value).to.eql({ foo: 'bar' });
             done();
           });
         });
@@ -110,8 +110,8 @@ describe('cursor', () => {
         cur = cursor([{ foo: 'baz' }], '', updateCh);
       });
 
-      it('exposes #map', () => {
-        expect( cur.map ).to.be.a('function');
+      it('exposes #add', () => {
+        expect( cur.add ).to.be.a('function');
       });
     });
 
