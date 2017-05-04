@@ -3,6 +3,10 @@ import getStateByPath from './get_state_by_path';
 import putOnChan from './put_on_chan';
 
 function equals(valueA, cursorB) {
+  if (!hasMethod(cursorB, 'deref')) {
+    // `cursorB` not a cursor so definitely not equal values
+    return false;
+  }
   return valuesEqual(valueA, cursorB.deref());
 }
 

@@ -36,6 +36,13 @@ describe('cursor', () => {
         const curB = cursor({foo: 'bar'}, '', updateCh);
         expect( curA.equals(curB) ).to.be(true);
       });
+
+      it('returns false with non-cursor values', () => {
+        const curA = cursor({foo: 'bar'}, '', updateCh);
+        expect( curA.equals({}) ).to.be(false);
+        expect( curA.equals(112) ).to.be(false);
+        expect( curA.equals('cursor') ).to.be(false);
+      })
     });
 
     describe('#refine', () => {
