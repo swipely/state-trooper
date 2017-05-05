@@ -1,5 +1,5 @@
 {
-  "name": "@upserve/state-trooper",
+  "name": "state-trooper",
   "version": "2.0.0-a1",
   "description": "Application State Manager",
   "main": "index.js",
