@@ -1,11 +1,11 @@
 import getStateByPath from './get_state_by_path';
 import patrol from './patrol';
-import { stakeout } from './stakeout';
+import { stakeoutAt } from './stakeout';
 
 const StateTrooper = {
   getStateByPath: getStateByPath,
   patrol: patrol,
-  stakeout: stakeout
+  stakeout: stakeoutAt
 };
 
 export default StateTrooper;

@@ -6,13 +6,13 @@ import getStateByPath from'./get_state_by_path';
 import findClosestTransmitter from'./find_closest_transmitter';
 import findClosestFetcherAndQuery from'./find_closest_fetcher_and_query';
 import applyStateChange from './apply_state_change';
-import { notifyStakeouts } from './stakeout';
+import { stakeoutAt, notifyStakeouts } from './stakeout';
 import { each, partial } from './underscore_ish';
 
 const findClosestPersister = partial(findClosestTransmitter, 'persister');
 
 const patrol = function (stateDescriptor) {
-  const dataStore = stateDescriptor.dataStore;
+  const { dataStore, stakeout } = stateDescriptor;
 
   const mainCursorCh = chan();
   const updateCh = chan();
@@ -33,6 +33,11 @@ const patrol = function (stateDescriptor) {
     if (conf.fetcher && conf.initialFetch !== false) {
       conf.fetcher(rootCursor.refine(path), rootCursor, conf.query);
     }
+  });
+
+  // register stakeouts
+  each(stakeout, (handlers, path) => {
+    handlers.forEach(fn => stakeoutAt(path, fn));
   });
 
   // respond to updates from the cursor
