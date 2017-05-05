@@ -7,12 +7,9 @@ import findClosestTransmitter from'./find_closest_transmitter';
 import findClosestFetcherAndQuery from'./find_closest_fetcher_and_query';
 import applyStateChange from './apply_state_change';
 import { notifyStakeouts } from './stakeout';
+import { each, partial } from './underscore_ish';
 
-function each(obj, fn) {
-  Object.keys(obj).forEach(key => fn(obj[key], key));
-}
-
-const findClosestPersister = findClosestTransmitter.bind(this, 'persister');
+const findClosestPersister = partial(findClosestTransmitter, 'persister');
 
 const patrol = function (stateDescriptor) {
   const dataStore = stateDescriptor.dataStore;
