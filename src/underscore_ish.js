@@ -33,4 +33,8 @@ function hasMethod(o, name) {
   return o != null && typeof o === 'object' && typeof o[name] === 'function';
 }
 
-export { each, partial, isEqual, hasMethod };
+function last(array) {
+  return array ? array[array.length - 1] : array;
+}
+
+export { each, partial, isEqual, hasMethod, last };

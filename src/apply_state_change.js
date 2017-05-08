@@ -1,10 +1,22 @@
 import update from 'immutability-helper';
+import { last } from './underscore_ish';
 
 /**
- * A custom immutability mutation to remove values from an array
+ * A custom immutability mutation to remove values from an array or object.
  */
-update.extend('$remove', function(value, originalArray) {
-  return originalArray.filter(item => item !== value);
+update.extend('$remove', function(value, original) {
+  var result = original;
+
+  if (Array.isArray(original)) {
+    value = parseInt(value);
+    result = original.filter((v, index) => index !== value);
+  }
+  else if (result != null) {
+    result = Object.assign({}, original);
+    delete result[value];
+  }
+
+  return result;
 });
 
 function pathToSpec(path, operation) {
@@ -19,7 +31,6 @@ function pathToSpec(path, operation) {
 }
 
 function applyStateChange(state, { path, action, value }) {
-  var spec = pathToSpec(path);
 
   switch (action) {
     case "set":
@@ -27,7 +38,8 @@ function applyStateChange(state, { path, action, value }) {
     case "add":
       return update(state, pathToSpec(path, { $push: [value] }));
     case "remove":
-      return update(state, pathToSpec(path, { $remove: value }));
+      // A remove needs to pass a path pointing to the parent of the node to remove
+      return update(state, pathToSpec(path.slice(0, -1), { $remove: last(path) }));
     case "replace":
       return update(state, pathToSpec(path, { $set: value }));
     default:

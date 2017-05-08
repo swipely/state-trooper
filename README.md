@@ -113,6 +113,12 @@ Calling cursor#refine with a string path will create a new cursor for that part
 of the state.  This is useful as you go down the component tree and the focus
 your component and state on a specific domain.
 
+### cursor#deref
+```javascript
+cursor.refine('foo').deref();
+```
+Calling cursor#deref returns the value at the refined location.
+
 ### cursor#set
 ```javascript
 cursor.refine('foo').set({ bar: 'foo' });
@@ -175,13 +181,63 @@ In this example the state change will result in:
 ```
 add is only available on Arrays/Lists
 
-### cursor#map
+### cursor#equals
 ```javascript
-cursor.refine('foo.beep').map((itemCursor) => {
-  // ...
+this.state.cursor.equals(newState.cursor);
+```
+This method compares the state encapsulated by two cursors. If the cursors hold equivalent values,
+based on the result of an `equals()` method, comparison by `Object.prototype.valueOf()`,
+or comparison of key/value pairs on the object.
+If you are a `React` user, this method can be useful for implementing `shouldComponentUpdate`.
+
+# Monitoring Changes
+
+StateTrooper also provides a mechanism for monitoring a piece of state and being notified when it changes.
+These are called "stakeouts". These are useful when an application needs to respond to a change in one piece of state,
+such as changing a user preference, and make further state changes.
+
+### StateTrooper.stakeout
+```javascript
+StateTrooper.stakeout('activityReport', (update, cursor) => {
+  // The `update` holds the new value and the action that caused the update
+  // The `cursor` is the root cursor.
+  if (update.value.somethingExcitingChanged) {
+    fetch(myExcitingService)
+      .then(response => response.json())
+      .then(json => cursor.replace('myExcitingState', json));
+  }
 });
 ```
-map makes it easier to loop over a list in the state and get refined cursors
-for each element in that array. Useful for passing a cursor to each item
-component in a list.
-map is only available on Arrays/Lists
+
+### StateTrooper.patrol
+```javascript
+  function handleActivityReportChange(update, cursor) {
+    console.log('handleActivityReportChange', update);
+  }
+
+  const cursorChan = StateTrooper.patrol({
+    // describe the state for the page
+    state: {
+      activity: null,
+      activityReport: null
+    },
+    stakeout: {
+      'activityReport': [handleActivityReportChange]
+    }
+  });
+
+```
+
+# API Changes
+
+A major change in the 2.x release of state-trooper is the removal of `immutable-js` as the internal data structure for storing state.
+
+The following APIs changed in v2.x:
+
+- cursor#deref(): Values returned are not `immutable-js` Maps or Lists.
+- cursor#derefJS(): *REMOVED*
+- cursor#hasSameValue(): Renamed to `cursor#equals`.
+- cursor#map(): *REMOVED*
+
+- StateTrooper#stakeout(): *ADDED*
+- StateTrooper#patrol(): The "config" object supports a `stakeout` property.

@@ -39,7 +39,15 @@ describe('applyStateChange', () => {
 
   describe('when the the action is "remove"', () => {
     it('removes the node at the path', () => {
-      const change = { path: ['foo', 'beeps'], action: 'remove', value: 'goo'};
+      const change = { path: ['foo', 'beeps'], action: 'remove', value: ['goo', 'gah']};
+      expect( applyStateChange(state, change) ).to.eql({
+        foo: {
+          bar: 'baz'
+        }
+      });
+    });
+    it('removes a value at an array index', () => {
+      const change = { path: ['foo', 'beeps', '0'], action: 'remove', value: 'goo'};
       expect( applyStateChange(state, change) ).to.eql({
         foo: {
           bar: 'baz',

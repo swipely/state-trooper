@@ -16,15 +16,15 @@ function deref(value) {
 
 // mutations and data store interactions
 function replace(ch, path, value, callback = null) {
-  update(ch, { path, value: value, action: 'replace', callback: callback });
+  update(ch, { path, value, action: 'replace', callback: callback });
 }
 
 function set(ch, path, value, callback = null) {
-  update(ch, { path, value: value, action: 'set', callback: callback });
+  update(ch, { path, value, action: 'set', callback: callback });
 }
 
 function add(ch, path, value, callback = null) {
-  update(ch, { path, value: value, action: 'add', callback: callback });
+  update(ch, { path, value, action: 'add', callback: callback });
 }
 
 function remove(ch, path, value, callback = null) {
