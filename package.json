@@ -3,6 +3,7 @@
   "version": "2.0.0-b1",
   "description": "Application State Manager",
   "main": "index.js",
+  "types": "index.d.ts",
   "scripts": {
     "test": "./node_modules/mocha/bin/mocha --reporter dot --compilers js:babel/register test/**_test.js",
     "prepublish": "babel src/ -d dist/"
