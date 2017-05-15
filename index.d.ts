@@ -5,8 +5,8 @@
 export interface Cursor<T> {
   readonly path: string[];
 
-  deref(): T;
-  replace(val: T): void;
+  deref(): T | null;
+  replace(val: T | null): void;
   set(val: Partial<T>): void;
   add(): void
   remove(): void

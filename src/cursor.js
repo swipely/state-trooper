@@ -15,7 +15,10 @@ function deref(value) {
 }
 
 // mutations and data store interactions
-function replace(ch, path, value, callback = null) {
+function replace(ch, path, curValue, value, callback = null) {
+  if (isEqual(value, curValue)) {
+    return;
+  }
   update(ch, { path, value, action: 'replace', callback: callback });
 }
 
@@ -58,7 +61,7 @@ const cursor = function (value, path, updateCh) {
     deref:    partial(deref, value),
     path:     path,
 
-    replace:  partial(replace, updateCh, path),
+    replace:  partial(replace, updateCh, path, value),
     remove:   partial(remove, updateCh, path, value),
 
     refine:   partial(refine, value, updateCh, path),
