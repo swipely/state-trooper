@@ -166,20 +166,19 @@ In this example the state change will result in:
 
 ### cursor#add
 ```javascript
-cursor.refine('foo.beep').add('blah');
+cursor.refine('foo.beep').add('yo');
 ```
-Calling cursor#remove will remove the entire subtree at the path of the cursor.
-This works on both arrays and objects.
+Calling cursor#add will push a new value on the end of the array held by the cursor.
 In this example the state change will result in:
 ```javascript
 {
   foo: {
     bar: 'baz',
-    beep: ['hey', 'yo', 'blah']
+    beep: ['hey', 'yo', 'yo']
   }
 }
 ```
-add is only available on Arrays/Lists
+add is only available on `Array` values.
 
 ### cursor#equals
 ```javascript
