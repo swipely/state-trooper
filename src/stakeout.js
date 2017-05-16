@@ -33,7 +33,7 @@ function notifyStakeouts(path, update, rootCursor) {
   }
 
   handlersByPath.get(path)
-    .forEach(monitor => monitor(update, rootCursor));
+    .forEach(handler => handler(update, rootCursor));
 }
 
 export { stakeoutAt, notifyStakeouts };
