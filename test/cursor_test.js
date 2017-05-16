@@ -1,5 +1,5 @@
 import expect from 'expect.js';
-import { go, chan, put, take, poll, NO_VALUE } from 'js-csp';
+import { go, chan, put, take, poll } from 'js-csp';
 import cursor from '../src/cursor';
 
 describe('cursor', () => {
@@ -67,18 +67,29 @@ describe('cursor', () => {
         go(function* () {
           cur.refine('foo.bar').replace({ baz: 42 });
           const change = poll(updateCh);
-          expect(change).to.eql(NO_VALUE);
+          expect(change.action).to.eql('noop');
           done();
         });
       })
 
       describe('with a callback', () => {
+        const cb = (x) => x;
+
         it('has a callback in the replace state change on the update chan', (done) => {
           go(function* () {
-            const cb = (x) => x;
             cur.replace('newval', cb);
             const change = yield take(updateCh);
             expect(change).to.eql({ action: 'replace', path: [], value: 'newval', callback: cb });
+            done();
+          });
+        });
+
+        it('calls the callback even when replacing an equivalent value', (done) => {
+          go(function* () {
+            cur.refine('foo.bar').replace({ baz: 42 }, cb);
+            const change = poll(updateCh);
+            expect(change.action).to.eql('noop');
+            expect(change.callback).to.eql(cb);
             done();
           });
         });

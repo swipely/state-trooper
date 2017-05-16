@@ -16,10 +16,12 @@ function deref(value) {
 
 // mutations and data store interactions
 function replace(ch, path, curValue, value, callback = null) {
+  // If the value is not changing, schedule a 'noop' so the callback will still be invoked
   if (isEqual(value, curValue)) {
-    return;
+    update(ch, { path, value, action: 'noop', callback: callback });
+  } else {
+    update(ch, { path, value, action: 'replace', callback: callback });
   }
-  update(ch, { path, value, action: 'replace', callback: callback });
 }
 
 function set(ch, path, value, callback = null) {

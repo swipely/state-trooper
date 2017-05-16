@@ -22,27 +22,27 @@ export interface Cursor<T> {
 export type QueryDef = string | object
 
 export interface DataStore {
-    readonly fetcher?: (cursor: Cursor<any>, rootCursor: Cursor<any>, query?: QueryDef) => void;
-    readonly persister?: (cursor: Cursor<any>, update: StateUpdate, rootCursor: Cursor<any>) => void;
-    readonly initialFetch?: boolean;
-    readonly query?: QueryDef;
+  readonly fetcher?: (cursor: Cursor<any>, rootCursor: Cursor<any>, query?: QueryDef) => void;
+  readonly persister?: (cursor: Cursor<any>, update: StateUpdate, rootCursor: Cursor<any>) => void;
+  readonly initialFetch?: boolean;
+  readonly query?: QueryDef;
 }
 
 export interface StateDescriptor<T> {
-    readonly state: T;
-    readonly dataStore?: { [key: string]: DataStore };
-    readonly stakeout?: { [key: string]: Array<StakeoutHandler> };
+  readonly state: T;
+  readonly dataStore?: { [key: string]: DataStore };
+  readonly stakeout?: { [key: string]: Array<StakeoutHandler> };
 }
 
 export type UpdateAction = 'set' | 'replace' | 'add' | 'remove';
 
 export interface StateUpdate {
-    readonly path: string[];
-    readonly action: UpdateAction;
-    readonly value: any;
+  readonly path: string[];
+  readonly action: UpdateAction;
+  readonly value: any;
 }
 
-export type StakeoutHandler = (update: StateUpdate, rootCursor: Cursor<any>) => void;
+export type StakeoutHandler = (cursor: Cursor<any>, update: StateUpdate, rootCursor: Cursor<any>) => void;
 
 export function patrol<T>(stateDesc: StateDescriptor<T>): any;
 

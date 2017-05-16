@@ -61,6 +61,12 @@ const patrol = function (stateDescriptor) {
 
         unpersistedChanges = [];
       }
+      else if (update.action === 'noop') {
+        // A 'no-op' action still needs to invoke the callback
+        if (typeof update.callback === 'function') {
+          update.callback(rootCursor.refine(update.path), rootCursor);
+        }
+      }
       else {
         unpersistedChanges.push(update);
         currentState = applyStateChange(currentState, update);
@@ -71,7 +77,7 @@ const patrol = function (stateDescriptor) {
         }
 
         putOnChan(mainCursorCh, rootCursor);
-        notifyStakeouts(update.path, update, rootCursor);
+        notifyStakeouts(rootCursor.refine(update.path), update, rootCursor);
       }
     }
   });

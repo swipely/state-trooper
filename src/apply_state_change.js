@@ -24,10 +24,9 @@ function pathToSpec(path, operation) {
     return operation;
   }
 
-  var spec = {
+  return {
     [path[0]] : pathToSpec(path.slice(1), operation)
   };
-  return spec;
 }
 
 function applyStateChange(state, { path, action, value }) {

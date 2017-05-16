@@ -85,7 +85,7 @@ describe('StateTrooper', function () {
     it('can create a stakeout', function (done) {
       let result = [];
 
-      StateTrooper.stakeout('something.a', (update, cursor) => {
+      StateTrooper.stakeout('something.a', (cursor, update) => {
         result.push(update.value);
 
         if (result.length === 3) {
