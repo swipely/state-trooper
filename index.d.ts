@@ -8,8 +8,7 @@ export interface Cursor<T> {
   deref(): T | null;
   replace(val: T | null): void;
   set(val: Partial<T>): void;
-  add(): void
-  remove(): void
+  remove(): void;
 
   refine<U>(path: string): Cursor<U>;
 
@@ -19,7 +18,11 @@ export interface Cursor<T> {
   persist(): void;
 }
 
-export type QueryDef = string | object
+export interface ArrayCursor<T> extends Cursor<Array<T>> {
+  add(val: T): void;
+}
+
+export type QueryDef = string | object;
 
 export interface DataStore {
   readonly fetcher?: (cursor: Cursor<any>, rootCursor: Cursor<any>, query?: QueryDef) => void;
