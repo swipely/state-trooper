@@ -77,7 +77,7 @@ const patrol = function (stateDescriptor) {
         }
 
         putOnChan(mainCursorCh, rootCursor);
-        notifyStakeouts(rootCursor.refine(update.path), update, rootCursor);
+        notifyStakeouts(update, rootCursor);
       }
     }
   });

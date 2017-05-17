@@ -19,18 +19,20 @@ function stakeoutAt(path, handler) {
   handlerList.push(handler);
 }
 
-function notifyStakeouts(cursor, update, rootCursor) {
+function notifyStakeouts(update, rootCursor) {
   const path = normalize(update.path);
 
   if (path === '') {
     // This is a "set" call on the root cursor, so notify based on the properties of the new value
-    each(update.value, (v, key) => notifyStakeouts(cursor, { path: key, value: v }, rootCursor));
+    each(update.value, (v, key) => notifyStakeouts({ path: key, value: v }, rootCursor));
     return;
   }
 
   if (!handlersByPath.has(path)) {
     return;
   }
+
+  const cursor = rootCursor.refine(update.path);
 
   handlersByPath.get(path)
     .forEach(handler => handler(cursor, update, rootCursor));
