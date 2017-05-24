@@ -1,28 +1,27 @@
-import _ from 'underscore';
-import Immutable from 'immutable';
 import { go, chan, take, put } from 'js-csp';
 
 import cursor from './cursor';
-import convertToNative from './convert_to_native';
 import putOnChan from './put_on_chan';
 import getStateByPath from'./get_state_by_path';
 import findClosestTransmitter from'./find_closest_transmitter';
 import findClosestFetcherAndQuery from'./find_closest_fetcher_and_query';
 import applyStateChange from './apply_state_change';
-
-const { each, partial } = _;
+import { stakeoutAt, notifyStakeouts } from './stakeout';
+import { each, partial } from './underscore_ish';
 
 const findClosestPersister = partial(findClosestTransmitter, 'persister');
 
 const patrol = function (stateDescriptor) {
-  const dataStore = stateDescriptor.dataStore;
+  const { dataStore, stakeout } = stateDescriptor;
 
   const mainCursorCh = chan();
-
   const updateCh = chan();
-  const createCursor = partial(cursor, _, [], updateCh);
 
-  let currentState = Immutable.fromJS(stateDescriptor.state);
+  function createCursor(v) {
+    return cursor(v, [], updateCh);
+  }
+
+  let currentState = stateDescriptor.state;
   let rootCursor = createCursor(currentState);
   let unpersistedChanges = [];
 
@@ -34,6 +33,11 @@ const patrol = function (stateDescriptor) {
     if (conf.fetcher && conf.initialFetch !== false) {
       conf.fetcher(rootCursor.refine(path), rootCursor, conf.query);
     }
+  });
+
+  // register stakeouts
+  each(stakeout, (handlers, path) => {
+    handlers.forEach(fn => stakeoutAt(path, fn));
   });
 
   // respond to updates from the cursor
@@ -57,6 +61,12 @@ const patrol = function (stateDescriptor) {
 
         unpersistedChanges = [];
       }
+      else if (update.action === 'noop') {
+        // A 'no-op' action still needs to invoke the callback
+        if (typeof update.callback === 'function') {
+          update.callback(rootCursor.refine(update.path), rootCursor);
+        }
+      }
       else {
         unpersistedChanges.push(update);
         currentState = applyStateChange(currentState, update);
@@ -67,6 +77,7 @@ const patrol = function (stateDescriptor) {
         }
 
         putOnChan(mainCursorCh, rootCursor);
+        notifyStakeouts(update, rootCursor);
       }
     }
   });

@@ -1,41 +1,35 @@
-import { memoize, partial, isArray, isEmpty } from 'underscore';
-import convertToNative from './convert_to_native';
-import Immutable from 'immutable';
+import getStateByPath from './get_state_by_path';
 import putOnChan from './put_on_chan';
+import { hasMethod, isEqual, partial } from './underscore_ish';
 
-function hasSameValue(valueA, cursorB) {
-  return isEqual(valueA, Immutable.fromJS(cursorB.deref()));
-}
-
-function isEqual(valueA, valueB) {
-  if (valueA) {
-    return Immutable.is(valueA, valueB);
+function equals(valueA, cursorB) {
+  if (!hasMethod(cursorB, 'deref')) {
+    // `cursorB` not a cursor so definitely not equal values
+    return false;
   }
-  else {
-    return valueA === valueB;
-  }
+  return isEqual(valueA, cursorB.deref());
 }
 
 function deref(value) {
   return value;
 }
 
-const derefJS = memoize(
-  convertToNative,
-  (value) => (isEmpty(value) || typeof value.hashCode !== 'function') ? value : value.hashCode()
-);
-
 // mutations and data store interactions
-function replace(ch, path, value, callback = null) {
-  update(ch, { path, value: Immutable.fromJS(value), action: 'replace', callback: callback });
+function replace(ch, path, curValue, value, callback = null) {
+  // If the value is not changing, schedule a 'noop' so the callback will still be invoked
+  if (isEqual(value, curValue)) {
+    update(ch, { path, value, action: 'noop', callback: callback });
+  } else {
+    update(ch, { path, value, action: 'replace', callback: callback });
+  }
 }
 
 function set(ch, path, value, callback = null) {
-  update(ch, { path, value: Immutable.fromJS(value), action: 'set', callback: callback });
+  update(ch, { path, value, action: 'set', callback: callback });
 }
 
 function add(ch, path, value, callback = null) {
-  update(ch, { path, value: Immutable.fromJS(value), action: 'add', callback: callback });
+  update(ch, { path, value, action: 'add', callback: callback });
 }
 
 function remove(ch, path, value, callback = null) {
@@ -51,53 +45,42 @@ function fetch(ch, path) {
 }
 
 function update(ch, change) {
-  putOnChan(ch, change);
+  putOnChan(ch, Object.freeze(change));
 }
 
 // refining
 function refine(value, updateCh, oldPath, newPath) {
-  const newPathArr = isArray(newPath) ? newPath : newPath.toString().split('.');
-  const refinedValue = value.getIn(newPathArr);
+  const newPathArr = Array.isArray(newPath) ? newPath : newPath.toString().split('.');
+  const refinedValue = getStateByPath(value, newPathArr);
   const refinedPath = oldPath.concat(newPathArr);
 
   return cursor(refinedValue, refinedPath, updateCh);
 }
 
-// array helpers
-function cMap(value, mapper) {
-  return value.map((v, i) => mapper(cursor.refine(i), i));
-}
-
 const cursor = function (value, path, updateCh) {
-  const imVal = Immutable.fromJS(value);
 
   let o = {
-    deref:    partial(deref, imVal),
-    derefJS:  partial(derefJS, imVal),
+    deref:    partial(deref, value),
     path:     path,
 
-    replace:  partial(replace, updateCh, path),
-    remove:   partial(remove, updateCh, path, imVal),
+    replace:  partial(replace, updateCh, path, value),
+    remove:   partial(remove, updateCh, path, value),
 
-    refine:   partial(refine, imVal, updateCh, path),
+    refine:   partial(refine, value, updateCh, path),
 
     persist:  partial(persist, updateCh, path),
     fetch:    partial(fetch, updateCh, path),
 
-    hasSameValue:  partial(hasSameValue, imVal)
+    equals:   partial(equals, value)
   };
 
-  Object.defineProperty(o, "value", {
-    get: partial(derefJS, imVal)
-  });
-
-  if (Immutable.List.isList(imVal)) {
+  if (Array.isArray(value)) {
     // array specific operations
-    o.map = partial(cMap, imVal);
     o.add = partial(add, updateCh, path);
   }
 
-  if (Immutable.Map.isMap(imVal)) {
+  if (hasMethod(value, 'valueOf')) {
+    // object specific operations
     o.set = partial(set, updateCh, path);
   }
 

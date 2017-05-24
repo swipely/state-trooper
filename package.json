@@ -1,8 +1,9 @@
 {
   "name": "state-trooper",
-  "version": "0.5.6",
+  "version": "2.0.0",
   "description": "Application State Manager",
   "main": "index.js",
+  "types": "index.d.ts",
   "scripts": {
     "test": "./node_modules/mocha/bin/mocha --reporter dot --compilers js:babel/register test/**_test.js",
     "prepublish": "babel src/ -d dist/"
@@ -17,13 +18,13 @@
   },
   "homepage": "https://github.com/swipely/state-trooper",
   "dependencies": {
-    "immutable": "^3.7.4",
+    "immutability-helper": "^2.2.0",
     "js-csp": "^0.5.0",
-    "underscore": "1.7.0"
+    "lodash.isequal": "^4.5.0"
   },
   "devDependencies": {
-    "sinon": "^1.16.1",
-    "mocha": "^1.21.5",
+    "sinon": "^2.2.0",
+    "mocha": "^3.3.0",
     "expect.js": "^0.3.1",
     "babel": "^5.6.7"
   }

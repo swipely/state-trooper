@@ -1,5 +1,5 @@
 import expect from 'expect.js';
-import { go, chan, put, take } from 'js-csp';
+import { go, chan, put, take, poll } from 'js-csp';
 import cursor from '../src/cursor';
 
 describe('cursor', () => {
@@ -21,27 +21,34 @@ describe('cursor', () => {
     });
 
     it('returns a cursor bound to state', () => {
-      expect(cur.derefJS()).to.eql({ foo: { bar: { baz: 42 }}});
+      expect(cur.deref()).to.eql({ foo: { bar: { baz: 42 }}});
     });
 
-    describe('#hasSameValue', () => {
+    describe('#equals', () => {
       it('returns false when the cursors hold different state', () => {
         const curA = cursor({foo: 'bar'}, '', updateCh);
         const curB = cursor({bar: 'foo'}, '', updateCh);
-        expect( curA.hasSameValue(curB) ).to.be(false);
+        expect( curA.equals(curB) ).to.be(false);
       });
 
       it('returns true when the cursors hold the same state', () => {
         const curA = cursor({foo: 'bar'}, '', updateCh);
         const curB = cursor({foo: 'bar'}, '', updateCh);
-        expect( curA.hasSameValue(curB) ).to.be(true);
+        expect( curA.equals(curB) ).to.be(true);
       });
+
+      it('returns false with non-cursor values', () => {
+        const curA = cursor({foo: 'bar'}, '', updateCh);
+        expect( curA.equals({}) ).to.be(false);
+        expect( curA.equals(112) ).to.be(false);
+        expect( curA.equals('cursor') ).to.be(false);
+      })
     });
 
     describe('#refine', () => {
       it('returns a new cursor bound to the refined state', () => {
         const refined = cur.refine('foo.bar');
-        expect(refined.derefJS()).to.eql({baz: 42});
+        expect(refined.deref()).to.eql({baz: 42});
         expect(refined.path).to.eql(['foo', 'bar']);
       });
     });
@@ -56,13 +63,33 @@ describe('cursor', () => {
         });
       });
 
+      it('does not log an update when replacing an equivalent value', (done) => {
+        go(function* () {
+          cur.refine('foo.bar').replace({ baz: 42 });
+          const change = poll(updateCh);
+          expect(change.action).to.eql('noop');
+          done();
+        });
+      })
+
       describe('with a callback', () => {
+        const cb = (x) => x;
+
         it('has a callback in the replace state change on the update chan', (done) => {
           go(function* () {
-            const cb = (x) => x;
             cur.replace('newval', cb);
             const change = yield take(updateCh);
             expect(change).to.eql({ action: 'replace', path: [], value: 'newval', callback: cb });
+            done();
+          });
+        });
+
+        it('calls the callback even when replacing an equivalent value', (done) => {
+          go(function* () {
+            cur.refine('foo.bar').replace({ baz: 42 }, cb);
+            const change = poll(updateCh);
+            expect(change.action).to.eql('noop');
+            expect(change.callback).to.eql(cb);
             done();
           });
         });
@@ -76,7 +103,7 @@ describe('cursor', () => {
           const change = yield take(updateCh);
           expect(change.action).to.be('remove');
           expect(change.path).to.eql(['foo', 'bar']);
-          expect(change.value.toJS()).to.eql({ baz: 42 });
+          expect(change.value).to.eql({ baz: 42 });
           done();
         });
       });
@@ -98,7 +125,7 @@ describe('cursor', () => {
             const change = yield take(updateCh);
             expect(change.action).to.be('set');
             expect(change.path).to.eql([]);
-            expect(change.value.toJS()).to.eql({ foo: 'bar' });
+            expect(change.value).to.eql({ foo: 'bar' });
             done();
           });
         });
@@ -110,8 +137,8 @@ describe('cursor', () => {
         cur = cursor([{ foo: 'baz' }], '', updateCh);
       });
 
-      it('exposes #map', () => {
-        expect( cur.map ).to.be.a('function');
+      it('exposes #add', () => {
+        expect( cur.add ).to.be.a('function');
       });
     });
 
