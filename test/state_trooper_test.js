@@ -36,7 +36,7 @@ describe('StateTrooper', function () {
     it('puts a cursor on the cursor chan', function () {
       go(function* () {
         let cursor = yield take(cursorChan);
-        expect( cursor.derefJS() ).to.eql({ foo: 'bar' });
+        expect( cursor.deref() ).to.eql({ foo: 'bar' });
       });
     });
 
@@ -65,6 +65,26 @@ describe('StateTrooper', function () {
           });
         });
       });
+    });
+  });
+
+  describe('.patrolRunLoop', function () {
+    let config = {
+      state: {
+        foo: 'bar'
+      },
+      dataStore: {
+        'foo': {
+          fetcher: sinon.spy(),
+          persister: sinon.spy()
+        }
+      }
+    };
+
+    it('returns the initial cursor', function () {
+      let cursor = StateTrooper.patrolRunLoop(config, (cursor) => {});
+      expect( cursor.deref() ).to.eql({ foo: 'bar' });
+      expect( config.dataStore['foo'].fetcher.calledOnce ).to.be(true);
     });
   });
 

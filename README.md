@@ -5,37 +5,36 @@ state trooper
 
 # Example Usage
 
-Call `StateTrooper.patrol` in your route handler/main app entry point
+Call `StateTrooper.patrolRunLoop` in your route handler/main app entry point
 ```javascript
-go(function*() {
-  let component = React.renderComponent(
-    <Server/>,
-    document.querySelector('body')
-  );
 
-  const cursorChan = StateTrooper.patrol({
-    // describe the state for the page
-    state: {
-      serverReport: null,
-      bio: null,
-      activity: null
-    },
+const config = {
+  // describe the state for the page
+  state: {
+    serverReport: null,
+    bio: null,
+    activity: null
+  },
 
-    // describe the fetchers and persisters for each piece of state
-    // fetchers and persisters are functions that should return channels
-    dataStore: {
-      'serverReport': { fetcher: serverReportFetcher },
-      'bio': { fetcher: bioFetcher, persister: bioPersister },
-      'activity': { fetcher: activityFetcher }
-    }
-  });
-
-  let cursor;
-  while(cursor = yield take(cursorChan)) {
-    // update the component cursor prop everytime it changes
-    component.setProps({ cursor: cursor });
+  // describe the fetchers and persisters for each piece of state
+  // fetchers and persisters are functions that should return channels
+  dataStore: {
+    'serverReport': { fetcher: serverReportFetcher },
+    'bio': { fetcher: bioFetcher, persister: bioPersister },
+    'activity': { fetcher: activityFetcher }
   }
+};
+const cursor = StateTrooper.patrolRunLoop(config, (cursor) => {
+  // Re-render the component when state changes generate new cursors
+  React.render(<Server cursor={cursor}/>, document.querySelector('body'));
 });
+
+// Render the component with the initial cursor
+React.render(
+  <Server cursor={cursor}/>,
+  document.querySelector('body')
+);
+
 ```
 
 Using cursors inside of the components
