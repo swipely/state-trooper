@@ -1,6 +1,6 @@
 {
   "name": "state-trooper",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Application State Manager",
   "main": "index.js",
   "types": "index.d.ts",
@@ -19,7 +19,7 @@
   "homepage": "https://github.com/swipely/state-trooper",
   "dependencies": {
     "immutability-helper": "^2.2.0",
-    "js-csp": "^0.5.0",
+    "js-csp": "0.9.2",
     "lodash.isequal": "^4.5.0"
   },
   "devDependencies": {
