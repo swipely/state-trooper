@@ -24,6 +24,15 @@ describe('cursor', () => {
       expect(cur.deref()).to.eql({ foo: { bar: { baz: 42 }}});
     });
 
+    describe('#deref', () => {
+      it('supports an optional path', () => {
+        expect(cur.deref('foo.bar.baz')).to.be(42);
+        expect(cur.deref(['foo', 'bar', 'baz'])).to.be(42);
+        expect(cur.deref('')).to.be(state);
+        expect(cur.deref([])).to.be(state);
+      });
+    });
+
     describe('#equals', () => {
       it('returns false when the cursors hold different state', () => {
         const curA = cursor({foo: 'bar'}, '', updateCh);
