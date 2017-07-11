@@ -115,8 +115,11 @@ your component and state on a specific domain.
 ### cursor#deref
 ```javascript
 cursor.refine('foo').deref();
+// or
+cursor.deref('foo');
 ```
 Calling cursor#deref returns the value at the refined location.
+If a path is provided, the path will be used starting at the refined location.
 
 ### cursor#set
 ```javascript

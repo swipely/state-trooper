@@ -10,7 +10,10 @@ function equals(valueA, cursorB) {
   return isEqual(valueA, cursorB.deref());
 }
 
-function deref(value) {
+function deref(value, path) {
+  if (path) {
+    return getStateByPath(value, path);
+  }
   return value;
 }
 
