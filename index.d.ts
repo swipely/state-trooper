@@ -1,11 +1,11 @@
-// Type definitions for state-trooper 2.0
+// Type definitions for state-trooper 2.1
 // Project: state-trooper
 // Definitions by: Andrew Goodale <andrewgoodale@upserve.com>
 
 export interface Cursor<T> {
   readonly path: string[];
 
-  deref(): T | null;
+  deref(path?: string): T | null;
   replace(val: T | null): void;
   set(val: Partial<T>): void;
   remove(): void;
