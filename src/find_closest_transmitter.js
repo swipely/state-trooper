@@ -13,7 +13,7 @@ const findClosestTransmitter = function (type, dataStore, path) {
     pathStr = parts.join('.');
 
     if (pathStr.length === 0) {
-      throw new Error("Couldn't find " + type + " for " + pathStr);
+      throw new Error("Couldn't find " + type + " for " + path.join('.'));
     }
   }
 

@@ -107,6 +107,7 @@ describe('StateTrooper', function () {
 
       StateTrooper.stakeout('something.a', (cursor, update) => {
         result.push(update.value);
+        expect(update.path).to.be.an(Array);
 
         if (result.length === 3) {
           expect( result ).to.eql([4, 5, 6])
@@ -120,6 +121,24 @@ describe('StateTrooper', function () {
         cursor.refine('something.a').add(4);
         cursor.refine('something.a').add(5);
         cursor.refine('something.a').add(6);
+      });
+    });
+
+    it('handles top-level set()', function (done) {
+
+      StateTrooper.stakeout('something', (cursor, update) => {
+        expect(update.path).to.eql(['something']);
+        expect(update.value).to.have.key('b');
+        expect(update.action).to.eql('set');
+        done();
+      });
+
+      go(function* () {
+        let cursor = yield take(cursorChan);
+
+        cursor.set({
+          something: { b: [1, 2, 3, 4] }
+        });
       });
     });
   });
