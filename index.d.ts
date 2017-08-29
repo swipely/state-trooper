@@ -5,12 +5,12 @@
 export interface Cursor<T> {
   readonly path: string[];
 
-  deref(path?: string): T | null;
+  deref(path?: string | string[]): T | null;
   replace(val: T | null): void;
   set(val: Partial<T>): void;
   remove(): void;
 
-  refine<U>(path: string): Cursor<U>;
+  refine<U>(path: string | string[]): Cursor<U>;
 
   equals(other: any): boolean;
 
