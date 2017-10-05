@@ -45,8 +45,17 @@ export interface StateUpdate {
   readonly value: any;
 }
 
-export type StakeoutHandler = (cursor: Cursor<any>, update: StateUpdate, rootCursor: Cursor<any>) => void;
+export type StakeoutHandler = (
+  cursor: Cursor<any>,
+  update: StateUpdate,
+  rootCursor: Cursor<any>
+) => void;
 
 export function patrol<T>(stateDesc: StateDescriptor<T>): any;
+
+export function patrolRunLoop<T>(
+  stateDesc: StateDescriptor<T>,
+  updateHandler: (cursor: Cursor<T>) => boolean | void
+): Cursor<T>;
 
 export function stakeout(path: string, handler: StakeoutHandler): void;
