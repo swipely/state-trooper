@@ -1,13 +1,13 @@
 {
   "name": "state-trooper",
-  "version": "2.1.2",
+  "version": "2.1.3",
   "description": "Application State Manager",
   "keywords": [
     "react",
     "cursor",
     "functional",
     "flux",
-	"immutable",
+    "immutable",
     "state"
   ],
   "main": "index.js",
