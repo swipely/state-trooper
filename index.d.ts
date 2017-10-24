@@ -6,9 +6,9 @@ export interface Cursor<T> {
   readonly path: string[];
 
   deref(path?: string | string[]): T | null;
-  replace(val: T | null): void;
-  set(val: Partial<T>): void;
-  remove(): void;
+  replace(val: T | null, callback?: CursorCallback<T>): void;
+  set(val: Partial<T>, callback?: CursorCallback<T>): void;
+  remove(callback?: CursorCallback<T>): void;
 
   refine<U>(path: string | string[]): Cursor<U>;
 
@@ -19,8 +19,10 @@ export interface Cursor<T> {
 }
 
 export interface ArrayCursor<T> extends Cursor<Array<T>> {
-  add(val: T): void;
+  add(val: T, callback?: CursorCallback<T>): void;
 }
+
+export type CursorCallback<T> = (cursor: Cursor<T>, rootCursor: Cursor<any>) => void;
 
 export type QueryDef = string | object;
 
