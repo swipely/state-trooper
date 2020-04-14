@@ -1,7 +1,21 @@
-state trooper
+State Trooper
 =============
 
+![](state-trooper-logo.png)
+
 ![](https://travis-ci.org/swipely/state-trooper.svg?branch=master)
+
+# Install
+
+npm
+```sh
+npm install state-trooper
+```
+
+Yarn
+```sh
+yarn add state-trooper
+```
 
 # Example Usage
 
